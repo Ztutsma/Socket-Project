@@ -9,16 +9,11 @@ public:
 	Client();
 	~Client();
 
-	void StartClient();
+	bool RequestRegister(std::vector<std::string> args);
 
-private:
-	void HandleMessage(std::string msg);
+	bool RequestDeregister();
 
-	void RequestRegister();
-
-	void RequestDeregister();
-
-	void RequestDHTSetup();
+	bool RequestDHTSetup();
 
 	void RequestJoinDHT();
 
@@ -28,11 +23,34 @@ private:
 
 	void RequestDHTTearddown();
 
+	bool RequestQueryDHT();
+
+	void QueryDHT(std::vector<std::string> args);
+
+private:
+	void StartClient();
+
+	void BuildLeftSocket();
+
+	void BuildRightSocket();
+
+	void BuildQuerySocket();
+
+	void ListenLeftPort();
+
+	void ListenQueryPort();
+
+	void HandleMessage(std::string msg);
+
+	void BuildDHTNetwork();
+
 	void BuildDHT();
+
+	void RebuildDHT();
 
 	void SetDHTPeerInfo(std::vector<std::string> args);
 
-	void QueryDHT();
+	void StoreDHTEntry(std::vector<std::string> args);
 
 };
 
