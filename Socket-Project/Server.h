@@ -87,7 +87,7 @@ private:
 
 	std::string StartDHTSetup(std::vector<std::string> args);
 
-	std::string StartDHTTearddown(std::vector<std::string> args);
+	std::string StartDHTTeardown(std::vector<std::string> args);
 
 	std::string UpdateDHTStatus(std::vector<std::string> args);
 

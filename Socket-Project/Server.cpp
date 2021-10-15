@@ -111,7 +111,7 @@ std::string Server::HandleMessage(std::string msg)
 
 	if (args[0] == "teardown-dht")
 	{
-		response = StartDHTTearddown(args);
+		response = StartDHTTeardown(args);
 	}
 
 	if (args[0] == "join-dht")
@@ -301,16 +301,38 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	return returnMessage;
 }
 
-std::string Server::StartDHTTearddown(std::vector <std::string> args)
+std::string Server::StartDHTTeardown(std::vector <std::string> args)
 {
+	std::string username = args[1];
+	int peerIndex;
+	Peer* peer;
+
 	// Check if peer is registered
+	peerIndex = IsRegisteredPeer(username);
+
+	if (peerIndex == -1)
+	{
+		return "FAILURE";
+	}
+
+	peer = &peers[peerIndex];
 
 	// Check if DHT exists
+	if (dhtStatus != Running)
+	{
+		return "FAILURE";
+	}
 
 	// Check if peer is leader of DHT
+	if (peer != leader)
+	{
+		return "FAILURE";
+	}
 
 	// Set DHT states as being torn down
+	dhtStatus = Teardown;
 
+	return "SUCCESS";
 }
 
 std::string Server::UpdateDHTStatus(std::vector <std::string> args)
@@ -352,13 +374,29 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 
 		// Mark DHT as running
 
-	// DHT Tearddown
-
+	// DHT Teardown
+	if (command == "teardown-complete")
+	{
 		// Check if peer is leader of DHT
+		if (peer != leader)
+		{
+			return "FAILURE";
+		}
 
 		// Set all peers to free
+		for (Peer peer : peers)
+		{
+			if (peer.state != Free)
+			{
+				peer.state = Free;
+			}
+		}
 
 		// Mark DHT as not existing
+		dhtStatus = None;
+	}
+
+	return "SUCCESS";
 }
 
 std::string Server::AddDHTPeer(std::vector <std::string> args)
