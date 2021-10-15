@@ -197,7 +197,7 @@ std::string Server::DeregisterPeer(std::vector <std::string> args)
 	Peer* peer;
 
 	// Check if peer is registered
-	peerIndex = IsRegisteredPeer(username);
+	peerIndex = GetPeerIndex(username);
 
 	if (peerIndex == -1)
 	{
@@ -226,7 +226,7 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	Peer* leader;
 
 	// Check if peer is registered
-	peerIndex = IsRegisteredPeer(username);
+	peerIndex = GetPeerIndex(username);
 
 	if (peerIndex == -1)
 	{
@@ -308,7 +308,7 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 	Peer* peer;
 
 	// Check if peer is registered
-	peerIndex = IsRegisteredPeer(username);
+	peerIndex = GetPeerIndex(username);
 
 	if (peerIndex == -1)
 	{
@@ -342,7 +342,7 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 	Peer* peer;
 
 	// Check if peer is registered
-	peerIndex = IsRegisteredPeer(username);
+	peerIndex = GetPeerIndex(username);
 
 	if (peerIndex == -1)
 	{
@@ -376,16 +376,39 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 
 std::string Server::DelDHTPeer(std::vector <std::string> args)
 {
+	std::string username = args[1];
+	int peerIndex;
+	Peer* peer;
+
 	// Check if peer is registered
+	peerIndex = GetPeerIndex(username);
+
+	if (peerIndex == -1)
+	{
+		return "FAILURE";
+	}
+
+	peer = &peers[peerIndex];
 
 	// Check if DHT exists
+	if (dhtStatus != Running)
+	{
+		return "FAILURE";
+	}
 
 	// Check if peer is in DHT
+	if (peer->state == Free)
+	{
+		return "FAILURE";
+	}
 
 	// Save leaving peer info
+	cachedPeer = peer;
 
 	// Set DHT status as being rebuilt
+	dhtStatus = Rebuilding;
 
+	return "SUCCESS";
 }
 
 std::string Server::UpdateDHTStatus(std::vector <std::string> args)
@@ -396,7 +419,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	Peer* peer;
 
 	// Check if peer is registered
-	peerIndex = IsRegisteredPeer(username);
+	peerIndex = GetPeerIndex(username);
 
 	if (peerIndex == -1)
 	{
@@ -415,17 +438,59 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		}
 		// Mark DHT as running
 		dhtStatus = Running;
+
+		return "SUCCESS";
 	}
 
 	// DHT Rebuilt
+	if (command == "dht-rebuilt")
+	{
+		std::string newLeaderUname = args[2];
+		Peer* newLeader;
 
 		// Check if peer is the one that asked to join/leave
+		if (peer != cachedPeer)
+		{
+			return "FAILURE";
+		}
+
+		// Check if new leader is registered
+		peerIndex = GetPeerIndex(newLeaderUname);
+
+		if (peerIndex == -1)
+		{
+			return "FAILURE";
+		}
+
+		newLeader = &peers[peerIndex];
 
 		// Set peer as free/in DHT
+		if (peer->state == Free)
+		{
+			peer->state = InDHT;
+		}
+		else
+		{
+			peer->state = Free;
+		}
 
 		// Set new peer as leader
+		if (newLeader != leader)
+		{
+			if (leader->state != Free)
+			{
+				leader->state = InDHT;
+			}
+			newLeader->state = Leader;
+			leader = newLeader;
+		}
 
 		// Mark DHT as running
+		dhtStatus = Running;
+
+		return "SUCCESS";
+	}
+
 
 	// DHT Teardown
 	if (command == "teardown-complete")
@@ -447,9 +512,9 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 
 		// Mark DHT as not existing
 		dhtStatus = None;
-	}
 
-	return "SUCCESS";
+		return "SUCCESS";
+	}
 }
 
 std::string Server::HandleDHTQuery(std::vector <std::string> args)
@@ -463,7 +528,7 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 	// Return random peer in DHT
 }
 
-int Server::IsRegisteredPeer(std::string uname) 
+int Server::GetPeerIndex(std::string uname) 
 {
 	for (int i = 0; i < peers.size(); i++)
 	{

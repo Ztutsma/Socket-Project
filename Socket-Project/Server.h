@@ -98,6 +98,6 @@ private:
 
 	std::string HandleDHTQuery(std::vector<std::string> args);
 
-	int Server::IsRegisteredPeer(std::string uname);
+	int Server::GetPeerIndex(std::string uname);
 };
 
