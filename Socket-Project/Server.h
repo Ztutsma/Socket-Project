@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <thread>
 
+#include "Parser.h"
+
 #define BUFFERMAX 1000
 
 class Server

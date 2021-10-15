@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.8)
 
 # Add source to this project's executable.
-add_executable (Client "Client.cpp" "Client.h")
-add_executable (Server "Server.cpp" "Server.h")
+add_executable (Client "Client.cpp" "Client.h" "Parser.cpp" "Parser.h")
+add_executable (Server "Server.cpp" "Server.h" "Parser.cpp" "Parser.h")
 
 # TODO: Add tests and install targets if needed.
