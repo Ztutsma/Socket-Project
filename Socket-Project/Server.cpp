@@ -1,14 +1,49 @@
 #include "Server.h"
 
-int main() 
+int main(int argc, char* argv[])
 {
+	int serverPort;
+
+	// Set default port if one is not provided
+	if (argc != 2)
+	{
+		serverPort = 28500;
+	}
+	else
+	{
+		int port = atoi(argv[1]);
+	}
+
+	// Start server
+	Server* server = new Server(serverPort);
+	server->StartServer();
+	printf("server: Port server is listening to is: %d\n", serverPort);
+
+	// Begin user input loop
+	std::string userInput = "";
+	std::cin.clear();
+	std::cin.ignore(10000, '\n');
+
+	while (!(strcasecmp(userInput.c_str(), "quit") == 0) || !(strcasecmp(userInput.c_str(), "exit") == 0))
+	{
+		// Loop until user enters "quit" or "exit"
+	}
+
 	return 0;
 }
 
 Server::Server(int port)
 {
 	// Build Server Socket
+	serverSocket.port = port;
+	serverSocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
+	memset(&serverSocket.address, 0, sizeof(serverSocket.address));		// Zero out structure
+	serverSocket.address.sin_family = AF_INET;							// Internet address family
+	serverSocket.address.sin_addr.s_addr = htonl(INADDR_ANY);				// Any incoming interface
+	serverSocket.address.sin_port = htons(serverSocket.port);				// Local port
+
+	bind(serverSocket.socket, (struct sockaddr*)&serverSocket.address, sizeof(serverSocket.address));
 }
 
 Server::~Server()
@@ -19,19 +54,28 @@ Server::~Server()
 void Server::StartServer()
 {
 	// Run threads
-
+	threads.push_back(std::thread(&Server::ListenToPort, this));
 }
 
 void Server::ListenToPort()
 {
+	message.addrLen = sizeof(message.address);
+
 	// Loop infinitely
 	while (true)
 	{
 		// Listen to port
+		message.msgSize = recvfrom(serverSocket.socket, message.buffer, BUFFERMAX, 0, (struct sockaddr*) &message.address, &message.addrLen);
 
+		message.buffer[message.msgSize] = '\0';
+		message.inMsg = std::string(message.buffer);
+		
 		// Handle message
+		message.outMsg = const_cast<char*>(HandleMessage(message.inMsg).c_str());
 
 		// Reply to client
+
+		sendto(serverSocket.socket, message.outMsg, strlen(message.outMsg), 0, (struct sockaddr*)&message.address, sizeof(message.addrLen));
 	}
 }
 
@@ -39,6 +83,10 @@ std::string Server::HandleMessage(std::string msg)
 {
 	// Check if server is accepting messages
 	// Proceed if dht is not being built nor rebuilt
+	if (dhtStatus == Building || dhtStatus == Rebuilding || dhtStatus == Teardown)
+	{
+		return "Failure";
+	}
 
 	// Parse message into list of arguments
 
