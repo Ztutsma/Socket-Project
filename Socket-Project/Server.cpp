@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		int port = atoi(argv[1]);
+		serverPort = atoi(argv[1]);
 	}
 
 	// Start server
@@ -24,9 +24,15 @@ int main(int argc, char* argv[])
 	std::cin.clear();
 	std::cin.ignore(10000, '\n');
 
-	while (!(strcasecmp(userInput.c_str(), "quit") == 0) || !(strcasecmp(userInput.c_str(), "exit") == 0))
+	while (!(strcasecmp(userInput.c_str(), "quit") == 0) && !(strcasecmp(userInput.c_str(), "exit") == 0))
 	{
 		// Loop until user enters "quit" or "exit"
+		std::getline(std::cin, userInput);
+
+		// Remove leading whitespace
+		userInput = userInput.substr(userInput.find_first_not_of(" \n\t\r\f\v"));
+
+		std::cin.clear();
 	}
 
 	return 0;
