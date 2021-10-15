@@ -315,11 +315,32 @@ std::string Server::StartDHTTearddown(std::vector <std::string> args)
 
 std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 {
+	std::string command = args[0];
+	std::string username = args[1];
+	int peerIndex;
+	Peer* peer;
+
+	// Check if peer is registered
+	peerIndex = IsRegisteredPeer(username);
+
+	if (peerIndex == -1)
+	{
+		return "FAILURE";
+	}
+
+	peer = &peers[peerIndex];
+
 	// DHT complete
-
+	if (command == "dht-complete")
+	{
 		// Check if peer is leader
-
+		if (peer != leader)
+		{
+			return "FAILURE";
+		}
 		// Mark DHT as running
+		dhtStatus = Running;
+	}
 
 	// DHT Rebuilt
 
