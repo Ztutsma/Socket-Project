@@ -1,7 +1,7 @@
 #include "Parser.h"
 
 // Converts message into a list of arguments
-static std::vector<std::string> ParseMessage(std::string msg)
+std::vector<std::string> ParseMessage(std::string msg)
 {
 	std::vector<std::string> args;
 	std::string segment;
@@ -16,7 +16,7 @@ static std::vector<std::string> ParseMessage(std::string msg)
 }
 
 // Converts user input into a list of arguments
-static std::vector<std::string> ParseUInput(std::string input)
+std::vector<std::string> ParseUInput(std::string input)
 {
 	std::vector<std::string> args;
 	std::string segment;
@@ -31,7 +31,7 @@ static std::vector<std::string> ParseUInput(std::string input)
 }
 
 // Converts list of arguments into a message
-static std::string FormatMessage(std::vector<std::string> args)
+std::string FormatMessage(std::vector<std::string> args)
 {
 	std::string msg = "";
 

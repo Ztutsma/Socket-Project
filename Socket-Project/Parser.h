@@ -4,6 +4,6 @@
 #include <vector>
 #include <sstream>
 
-static std::vector<std::string> ParseMessage(std::string msg);
-static std::vector<std::string> ParseUInput(std::string input);
-static std::string FormatMessage(std::vector<std::string> args);
+std::vector<std::string> ParseMessage(std::string msg);
+std::vector<std::string> ParseUInput(std::string input);
+std::string FormatMessage(std::vector<std::string> args);
