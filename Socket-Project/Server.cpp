@@ -87,7 +87,7 @@ std::string Server::HandleMessage(std::string msg)
 	// Proceed if dht is not being built, rebuilt, or torn down
 	if (dhtStatus == Building || dhtStatus == Rebuilding || dhtStatus == Teardown)
 	{
-		return "Failure";
+		return "FAILURE";
 	}
 
 	// Parse message into list of arguments
@@ -154,7 +154,7 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 			// Check for unique username
 			if (peer.uname == username)
 			{
-				return "Failure";
+				return "FAILURE";
 			}
 
 			// Check for no IP Address and Port conflicts
@@ -164,7 +164,7 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 					std::to_string(peer.rightPort) == rightPort ||
 					std::to_string(peer.queryPort) == queryPort)
 				{
-					return "Failure";
+					return "FAILURE";
 				}
 			}
 		}
@@ -173,7 +173,7 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 	// Check for username length
 	if (username.length() > 15)
 	{
-		return "Failure";
+		return "FAILURE";
 	}
 	
 	// Add to list of registered peers
@@ -187,37 +187,118 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 
 	peers.push_back(newPeer);
 
-	return "Success";
+	return "SUCCESS";
 }
 
 std::string Server::DeregisterPeer(std::vector <std::string> args)
 {
+	std::string username = args[1];
+	int peerIndex;
+	Peer* peer;
+
+	// Check if peer is registered
+	peerIndex = IsRegisteredPeer(username);
+
+	if (peerIndex == -1)
+	{
+		return "FAILURE";
+	}
+
+	peer = &peers[peerIndex];
+
 	// Check if peer is in DHT
+	if (peer->state != Free)
+	{
+		return "FAILURE";
+	}
 
 	// Remove from list of registered peers
+	peers.erase(peers.begin() + peerIndex);
 
+	return "SUCCESS";
 }
 
 std::string Server::StartDHTSetup(std::vector <std::string> args)
 {
+	int nodeCount = stoi(args[1]);
+	std::string username = args[2];
+	int peerIndex;
+	Peer* leader;
+
 	// Check if peer is registered
+	peerIndex = IsRegisteredPeer(username);
+
+	if (peerIndex == -1)
+	{
+		return "FAILURE";
+	}
 
 	// Check if DHT already exists
+	if (dhtStatus != None)
+	{
+		return "FAILURE";
+	}
 
 	// Check if there are more than 2 nodes being requested
+	if (nodeCount < 2)
+	{
+		return "FAILURE";
+	}
 
 	// Check if there are at least as many peers as nodes being requested
+	if (peers.size() < nodeCount)
+	{
+		return "FAILURE";
+	}
 
 	// Set peer to leader
+	leader = &peers[peerIndex];
+	leader->state = Leader;
+	this->leader = leader;
 
-	// Select nodes to be in DHT
+	// Begin building return message
+	args.clear();
+	args.push_back("SUCCESS");
+	args.push_back(leader->uname);
+	args.push_back(leader->IPAddr);
+	args.push_back(std::to_string(leader->leftPort));
+	args.push_back(std::to_string(leader->rightPort));
+	args.push_back(std::to_string(leader->queryPort));
+
+	// Select random nodes to be in DHT
+	srand(time(NULL));
+	int randInt;
+	int peersInDHT = 0;
+
+	while (peersInDHT < nodeCount - 1)
+	{
+		randInt = rand() % peers.size();
+
+		if (peers[randInt].uname == leader->uname || peers[randInt].state == InDHT)
+		{
+			continue;
+		}
+
+		peers[randInt].state = InDHT;
+
+		// Add peer to return message
+		args.push_back(peers[randInt].uname);
+		args.push_back(peers[randInt].IPAddr);
+		args.push_back(std::to_string(peers[randInt].leftPort));
+		args.push_back(std::to_string(peers[randInt].rightPort));
+		args.push_back(std::to_string(peers[randInt].queryPort));
+
+		peersInDHT++;
+	}
 
 	// Set DHT status as being built
+	dhtStatus = Building;
 
 	// Format message
+	std::string returnMessage = FormatMessage(args);
 
 	// Return message containing tuples of nodes in DHT
-
+	return returnMessage;
 }
 
 std::string Server::StartDHTTearddown(std::vector <std::string> args)
@@ -297,4 +378,17 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 	// Check if peer is in DHT
 
 	// Return random peer in DHT
+}
+
+int Server::IsRegisteredPeer(std::string uname) 
+{
+	for (int i = 0; i < peers.size(); i++)
+	{
+		if (peers[i].uname == uname)
+		{
+			return i;
+		}
+	}
+
+	return -1;
 }

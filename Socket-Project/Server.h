@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <thread>
-
+#include <time.h>
 #include "Parser.h"
 
 #define BUFFERMAX 1000
@@ -73,7 +73,7 @@ private:
 	std::vector<std::thread> threads;
 
 	// Peer/DHT variables
-	Peer leader;
+	Peer* leader;
 	std::vector<Peer> peers;
 	DHTStatus dhtStatus = None;
 	
@@ -96,5 +96,7 @@ private:
 	std::string DelDHTPeer(std::vector<std::string> args);
 
 	std::string HandleDHTQuery(std::vector<std::string> args);
+
+	int Server::IsRegisteredPeer(std::string uname);
 };
 
