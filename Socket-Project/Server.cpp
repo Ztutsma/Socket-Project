@@ -81,19 +81,61 @@ void Server::ListenToPort()
 
 std::string Server::HandleMessage(std::string msg)
 {
+	std::string response;
+
 	// Check if server is accepting messages
-	// Proceed if dht is not being built nor rebuilt
+	// Proceed if dht is not being built, rebuilt, or torn down
 	if (dhtStatus == Building || dhtStatus == Rebuilding || dhtStatus == Teardown)
 	{
 		return "Failure";
 	}
 
 	// Parse message into list of arguments
+	std::vector <std::string> args = ParseMessage(msg);
 
 	// Switch based on first argument
+	if (args[0] == "register")
+	{
+		response = RegisterPeer(args);
+	}
+
+	if (args[0] == "deregister")
+	{
+		response = DeregisterPeer(args);
+	}
+
+	if (args[0] == "setup-dht")
+	{
+		response = StartDHTSetup(args);
+	}
+
+	if (args[0] == "teardown-dht")
+	{
+		response = StartDHTTearddown(args);
+	}
+
+	if (args[0] == "join-dht")
+	{
+		response = AddDHTPeer(args);
+	}
+
+	if (args[0] == "leave-dht")
+	{
+		response = DelDHTPeer(args);
+	}
+
+	if (args[0] == "query-dht")
+	{
+		response = HandleDHTQuery(args);
+	}
+
+	if (args[0] == "dht-complete" || args[0] == "dht-rebuilt" || args[0] == "teardown-complete")
+	{
+		response = UpdateDHTStatus(args);
+	}
 
 	// Return response
-
+	return response;
 }
 
 std::string Server::RegisterPeer(std::vector <std::string> args)
