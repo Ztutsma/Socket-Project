@@ -140,13 +140,54 @@ std::string Server::HandleMessage(std::string msg)
 
 std::string Server::RegisterPeer(std::vector <std::string> args)
 {
-	// Check for unique username
+	std::string username = args[1];
+	std::string IPAddress = args[2];
+	std::string leftPort = args[3];
+	std::string rightPort = args[4];
+	std::string queryPort = args[5];
+
+
+	if (peers.size() != 0)
+	{
+		for (Peer peer : peers)
+		{
+			// Check for unique username
+			if (peer.uname == username)
+			{
+				return "Failure";
+			}
+
+			// Check for no IP Address and Port conflicts
+			if (peer.IPAddr == IPAddress)
+			{
+				if (std::to_string(peer.leftPort) == leftPort ||
+					std::to_string(peer.rightPort) == rightPort ||
+					std::to_string(peer.queryPort) == queryPort)
+				{
+					return "Failure";
+				}
+			}
+		}
+	}
 
 	// Check for username length
-
-	// Check for no IP Address and Port conflicts
-
+	if (username.length() > 15)
+	{
+		return "Failure";
+	}
+	
 	// Add to list of registered peers
+	Peer newPeer;
+	newPeer.uname = username;
+	newPeer.IPAddr = IPAddress;
+	newPeer.leftPort = stoi(leftPort);
+	newPeer.rightPort = stoi(rightPort);
+	newPeer.queryPort = stoi(queryPort);
+	newPeer.state = Free;
+
+	peers.push_back(newPeer);
+
+	return "Success";
 }
 
 std::string Server::DeregisterPeer(std::vector <std::string> args)
