@@ -491,7 +491,6 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		return "SUCCESS";
 	}
 
-
 	// DHT Teardown
 	if (command == "teardown-complete")
 	{
@@ -519,13 +518,54 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 
 std::string Server::HandleDHTQuery(std::vector <std::string> args)
 {
+	std::string username = args[1];
+	int peerIndex;
+	Peer* peer;
+
 	// Check if peer is registered
+	peerIndex = GetPeerIndex(username);
+
+	if (peerIndex == -1)
+	{
+		return "FAILURE";
+	}
+
+	peer = &peers[peerIndex];
 
 	// Check if DHT exists
+	if (dhtStatus != Running)
+	{
+		return "FAILURE";
+	}
 
 	// Check if peer is in DHT
+	if (peer->state != Free)
+	{
+		return "FAILURE";
+	}
 
-	// Return random peer in DHT
+	// Select random peer in DHT
+	srand(time(NULL));
+	int randInt = rand() % peers.size();
+	Peer tempPeer = peers[randInt];
+
+	while (tempPeer.state == Free)
+	{
+		randInt = rand() % peers.size();
+		tempPeer = peers[randInt];
+	}
+
+	// Format random peers info
+	args.clear();
+	args.push_back("SUCCESS");
+	args.push_back(tempPeer.uname);
+	args.push_back(tempPeer.IPAddr);
+	args.push_back(std::to_string(tempPeer.queryPort));
+
+	std::string returnMessage = FormatMessage(args);
+
+	// Return info
+	return returnMessage;
 }
 
 int Server::GetPeerIndex(std::string uname) 
