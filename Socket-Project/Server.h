@@ -74,6 +74,7 @@ private:
 
 	// Peer/DHT variables
 	Peer* leader;
+	Peer* cachedPeer;
 	std::vector<Peer> peers;
 	DHTStatus dhtStatus = None;
 	
@@ -89,11 +90,11 @@ private:
 
 	std::string StartDHTTeardown(std::vector<std::string> args);
 
-	std::string UpdateDHTStatus(std::vector<std::string> args);
-
 	std::string AddDHTPeer(std::vector<std::string> args);
 
 	std::string DelDHTPeer(std::vector<std::string> args);
+
+	std::string UpdateDHTStatus(std::vector<std::string> args);
 
 	std::string HandleDHTQuery(std::vector<std::string> args);
 

@@ -335,6 +335,59 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 	return "SUCCESS";
 }
 
+std::string Server::AddDHTPeer(std::vector <std::string> args)
+{
+	std::string username = args[1];
+	int peerIndex;
+	Peer* peer;
+
+	// Check if peer is registered
+	peerIndex = IsRegisteredPeer(username);
+
+	if (peerIndex == -1)
+	{
+		return "FAILURE";
+	}
+
+	peer = &peers[peerIndex];
+
+	// Check if DHT exists
+	if (dhtStatus != Running)
+	{
+		return "FAILURE";
+	}
+
+	// Check if peer is in DHT
+	if (peer->state != Free)
+	{
+		return "FAILURE";
+	}
+
+	// Save joining peer info
+	cachedPeer = peer;
+
+	// Set DHT status as being rebuilt
+	dhtStatus = Rebuilding;
+
+	//TODO add rest of AddDHTPeer method
+	// Reply with leader's info
+
+}
+
+std::string Server::DelDHTPeer(std::vector <std::string> args)
+{
+	// Check if peer is registered
+
+	// Check if DHT exists
+
+	// Check if peer is in DHT
+
+	// Save leaving peer info
+
+	// Set DHT status as being rebuilt
+
+}
+
 std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 {
 	std::string command = args[0];
@@ -397,35 +450,6 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	}
 
 	return "SUCCESS";
-}
-
-std::string Server::AddDHTPeer(std::vector <std::string> args)
-{
-	// Check if peer is registered
-
-	// Check if DHT exists
-
-	// Check if peer is in DHT
-
-	// Save joining peer info
-
-	// Set DHT status as being rebuilt
-
-	// Reply with leader's info
-}
-
-std::string Server::DelDHTPeer(std::vector <std::string> args)
-{
-	// Check if peer is registered
-
-	// Check if DHT exists
-
-	// Check if peer is in DHT
-
-	// Save leaving peer info
-
-	// Set DHT status as being rebuilt
-
 }
 
 std::string Server::HandleDHTQuery(std::vector <std::string> args)
