@@ -451,9 +451,13 @@ void Client::ListenQueryPort()
 void Client::HandleMessage(std::string msg)
 {
 	// Parse message
+	std::vector<std::string> args = ParseMessage(msg);
 
 	// Switch based off first argument
-
+	if (args[0] == "set-id")
+	{
+		SetDHTPeerInfo(args);
+	}
 
 }
 
@@ -537,11 +541,28 @@ void Client::RebuildDHT()
 
 void Client::SetDHTPeerInfo(std::vector<std::string> args)
 {
-	// Set self ID
-
-	// Set Right Neighbour IP Addr/Port
+	int i = 1;
+	// Set self ID/DHT Info
+	self.dhtID = stoi(args[i++]);
+	dhtRingSize = stoi(args[i++]);
+	self.state = InDHT;
 
 	// Set Left Neighbour IP Addr/Port
+	leftPeer.uname = args[i++];
+	leftPeer.IPAddr = args[i++];
+	leftPeer.leftPort = stoi(args[i++]);
+	leftPeer.rightPort = stoi(args[i++]);
+	leftPeer.queryPort = stoi(args[i++]);
+
+	// Set Right Neighbour IP Addr/Port
+	rightPeer.uname = args[i++];
+	rightPeer.IPAddr = args[i++];
+	rightPeer.leftPort = stoi(args[i++]);
+	rightPeer.rightPort = stoi(args[i++]);
+	rightPeer.queryPort = stoi(args[i++]);
+
+	// Update right socket to new right peer
+	UpdateRightSocket();
 }
 
 void Client::StoreDHTEntry(std::vector<std::string> args)
