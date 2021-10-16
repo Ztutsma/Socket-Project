@@ -31,7 +31,18 @@ public:
 
 private:
 	Socket serverSocket;
+	Socket leftSocket;
+	Socket rightSocket;
+	Socket querySocket;
+
+	// Keep track of peers
 	Peer self;
+	Peer rightPeer;
+	Peer leftPeer;
+	std::vector<Peer> dhtPeers;
+
+	// Thread Variables
+	std::vector<std::thread> threads;
 
 	void StartClient();
 

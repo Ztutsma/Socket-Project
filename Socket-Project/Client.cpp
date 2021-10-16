@@ -348,47 +348,101 @@ void Client::QueryDHT(std::vector<std::string> args)
 void Client::StartClient()
 {
 	// Build Sockets
+	BuildLeftSocket();
+	BuildQuerySocket();
 
 	// Start Listening Threads
-
+	threads.push_back(std::thread(&Client::ListenLeftPort, this));
+	threads.push_back(std::thread(&Client::ListenQueryPort, this));
 }
 
 void Client::BuildLeftSocket()
 {
+	leftSocket.port = self.leftPort;
+	if ((leftSocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		DieWithError("server: socket() failed");
 
+	memset(&leftSocket.address, 0, sizeof(leftSocket.address));		// Zero out structure
+	leftSocket.address.sin_family = AF_INET;							// Internet address family
+	leftSocket.address.sin_addr.s_addr = htonl(INADDR_ANY);				// Any incoming interface
+	leftSocket.address.sin_port = htons(leftSocket.port);				// Local port
+
+	if (bind(leftSocket.socket, (struct sockaddr*)&leftSocket.address, sizeof(leftSocket.address)) < 0)
+	{
+		DieWithError("server: bind() failed");
+	}
 }
 
 void Client::BuildRightSocket()
 {
+	rightSocket.port = rightPeer.leftPort;
+	if ((rightSocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		DieWithError("server: socket() failed");
 
+	memset(&rightSocket.address, 0, sizeof(rightSocket.address));
+	rightSocket.address.sin_family = AF_INET;
+	rightSocket.address.sin_addr.s_addr = inet_addr(rightPeer.IPAddr.c_str());
+	rightSocket.address.sin_port = htons(rightSocket.port);
 }
 
 void Client::BuildQuerySocket()
 {
+	querySocket.port = self.queryPort;
+	if ((querySocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		DieWithError("server: socket() failed");
 
+	memset(&querySocket.address, 0, sizeof(querySocket.address));		// Zero out structure
+	querySocket.address.sin_family = AF_INET;							// Internet address family
+	querySocket.address.sin_addr.s_addr = htonl(INADDR_ANY);				// Any incoming interface
+	querySocket.address.sin_port = htons(querySocket.port);				// Local port
+
+	if (bind(querySocket.socket, (struct sockaddr*)&querySocket.address, sizeof(querySocket.address)) < 0)
+	{
+		DieWithError("server: bind() failed");
+	}
 }
 
 void Client::ListenLeftPort()
 {
+	Message message;
+
+	message.addrLen = sizeof(message.address);
+
 	// Loop infinitely
 	while (true)
 	{
 		// Listen to port
+		message.msgSize = recvfrom(leftSocket.socket, message.buffer, BUFFERMAX, 0, (struct sockaddr*)&message.address, &message.addrLen);
+
+		message.buffer[message.msgSize] = '\0';
+		message.inMsg = std::string(message.buffer);
+
+		printf("\nLPort: %s\n", message.inMsg.c_str());
 
 		// Handle message
-
+		HandleMessage(message.inMsg);
 	}
 }
 
 void Client::ListenQueryPort()
 {
+	Message message;
+
+	message.addrLen = sizeof(message.address);
+
 	// Loop infinitely
 	while (true)
 	{
 		// Listen to port
+		message.msgSize = recvfrom(querySocket.socket, message.buffer, BUFFERMAX, 0, (struct sockaddr*)&message.address, &message.addrLen);
+
+		message.buffer[message.msgSize] = '\0';
+		message.inMsg = std::string(message.buffer);
+
+		printf("\nQPort: %s\n", message.inMsg.c_str());
 
 		// Handle message
-
+		HandleMessage(message.inMsg);
 	}
 }
 
