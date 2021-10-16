@@ -59,6 +59,7 @@ private:
 
 	std::vector<std::string> SendMessage(Socket socket, std::string msg);
 
-	std::vector<std::string> Client::SendMessage(Socket socket, std::vector<std::string> args);
+	std::vector<std::string> SendMessage(Socket socket, std::vector<std::string> args);
 };
 
+bool ValidateIPAddress(std::string input);
