@@ -465,13 +465,13 @@ void Client::BuildDHTNetwork(std::vector<std::string> args)
 {
 	// Add peers to list of peers in dht
 	Peer peer;
-	for (int i = 1; i < args.size(); i+= 5)
+	for (int i = 1; i < args.size();)
 	{
-		peer.uname = args[i];
-		peer.IPAddr = args[i + 1];
-		peer.leftPort = stoi(args[i + 2]);
-		peer.rightPort = stoi(args[i + 3]);
-		peer.queryPort = stoi(args[i + 4]);
+		peer.uname = args[i++];
+		peer.IPAddr = args[i++];
+		peer.leftPort = stoi(args[i++]);
+		peer.rightPort = stoi(args[i++]);
+		peer.queryPort = stoi(args[i++]);
 
 		dhtPeers.push_back(peer);
 	}
