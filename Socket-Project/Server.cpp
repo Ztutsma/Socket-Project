@@ -80,7 +80,6 @@ void Server::ListenToPort()
 		message.outMsg = const_cast<char*>(HandleMessage(message.inMsg).c_str());
 
 		// Reply to client
-
 		sendto(serverSocket.socket, message.outMsg, strlen(message.outMsg), 0, (struct sockaddr*)&message.address, sizeof(message.addrLen));
 	}
 }
@@ -192,6 +191,7 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 	newPeer.state = Free;
 
 	peers.push_back(newPeer);
+	printf("New Peer Added: %s %s", newPeer.uname.c_str(), newPeer.IPAddr.c_str());
 
 	return "SUCCESS";
 }
