@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 	std::string userInput = "";
 	std::vector<std::string> args;
 
-	while (!(strcasecmp(userInput.c_str(), "quit") == 0) && !(strcasecmp(userInput.c_str(), "exit") == 0))
+	while (userInput != "quit" && userInput != "exit")
 	{
 		std::cout << "IN >> ";
 		std::getline(std::cin, userInput);
@@ -58,9 +58,17 @@ int main(int argc, char* argv[])
 		// Parse user input into list of arguments
 		args = ParseUInput(userInput);
 
-		if (strcasecmp(args[0].c_str(), "register") == 0)
+		// Switch off first argument
+		if (args[0] == "register")
 		{
-			client->RequestRegister(args);
+			if (client->RequestRegister(args))
+			{
+				printf("Registration successful");
+			}
+			else
+			{
+				printf("Registration unsuccessful");
+			}
 		}
 		if (strcasecmp(args[0].c_str(), "deregister") == 0)
 		{
@@ -115,18 +123,33 @@ Client::~Client()
 
 bool Client::RequestRegister(std::vector<std::string> args)
 {
-	// Format message
+	// Save argument info
+	std::string username = args[1];
+	std::string IPAddress = args[2];
+	std::string leftPort = args[3];
+	std::string rightPort = args[4];
+	std::string queryPort = args[5];
 
 	// Message server
-
-	// Wait for response
+	args = SendMessage(serverSocket, args);
 
 	// Check if successful
+	if (args[0] != "SUCCESSFUL")
+	{
+		return false;
+	}
 
-		// Set Self's Username, IP Address, & Ports
+	// Set Self's Username, IP Address, & Ports
+	self.uname = username;
+	self.IPAddr = IPAddress;
+	self.leftPort = stoi(leftPort);
+	self.rightPort = stoi(rightPort);
+	self.queryPort = stoi(queryPort);
 
-		// Start Client
+	// Start Client
 
+
+	return true;
 }
 
 bool Client::RequestDeregister(std::vector<std::string> args)
@@ -355,3 +378,37 @@ void Client::StoreDHTEntry(std::vector<std::string> args)
 
 }
 
+std::vector<std::string> Client::SendMessage(Socket socket, std::string msg)
+{
+	// Send message to socket
+
+	// Wait for Response
+
+	// Parse response
+
+	// Return response as a list of strings
+}
+
+std::vector<std::string> Client::SendMessage(Socket socket, std::vector<std::string> args)
+{
+	// Format Message
+	Message msg;
+	msg.addrLen = sizeof(msg.address);
+	msg.address = socket.address;
+	msg.outMsg = const_cast<char*>(FormatMessage(args).c_str());
+
+	// Send message to socket
+	sendto(socket.socket, msg.outMsg, strlen(msg.outMsg), 0, (struct sockaddr*)&msg.address, sizeof(msg.addrLen));
+
+	// Wait for Response
+	msg.msgSize = recvfrom(socket.socket, msg.buffer, BUFFERMAX, 0, (struct sockaddr*) &msg.address, &msg.addrLen);
+	msg.buffer[msg.msgSize] = '\0';
+	msg.inMsg = std::string(msg.buffer);
+
+	// Parse response
+	args.clear();
+	args = ParseMessage(msg.inMsg);
+
+	// Return response as a list of strings
+	return args;
+}
