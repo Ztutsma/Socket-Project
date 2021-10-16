@@ -8,3 +8,4 @@ add_executable (Client "Client.cpp" "Client.h" "Parser.cpp" "Parser.h" "socket-h
 add_executable (Server "Server.cpp" "Server.h" "Parser.cpp" "Parser.h" "socket-helper.h")
 
 # TODO: Add tests and install targets if needed.
+set(CMAKE_CXX_FLAGS "-pthread")
