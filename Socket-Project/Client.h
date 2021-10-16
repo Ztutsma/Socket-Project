@@ -3,6 +3,7 @@
 #include "socket-helper.h"
 #include "Parser.h"
 #include <regex>
+#include <fstream>
 
 
 class Client
@@ -47,6 +48,22 @@ private:
 	// DHT Variables
 	std::vector<Peer> dhtPeers;
 	int dhtRingSize;
+
+	// Hashtable Node structure and list
+	struct HashNode
+	{
+		std::string countryCode;
+		std::string shortName;
+		std::string tableName;
+		std::string longName;
+		std::string alphaCode;
+		std::string currencyUnit;
+		std::string region;
+		std::string wb2Code;
+		std::string lastPopCensus;
+		HashNode* next;
+	};
+	std::vector<HashNode*> hashTable;
 
 	void StartClient();
 

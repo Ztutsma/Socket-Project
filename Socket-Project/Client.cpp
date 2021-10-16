@@ -140,6 +140,9 @@ Client::Client(std::string IPAddress, int serverPort)
 	serverSocket.address.sin_family = AF_INET;
 	serverSocket.address.sin_addr.s_addr = inet_addr(IPAddress.c_str());
 	serverSocket.address.sin_port = htons(serverSocket.port);
+
+	// Initialize Hash Table
+	hashTable.assign(353, NULL);
 }
 
 Client::~Client()
@@ -523,13 +526,63 @@ void Client::BuildDHTNetwork(std::vector<std::string> args)
 
 void Client::BuildDHT()
 {
+	std::ifstream inputFile("StatsCountry.csv");
+	std::string line;
+
+	HashNode node;
+
+	std::vector<std::string> args;
+
+	int pos;
+	int id;
+
+	// Discard first line of file
+	std::getline(inputFile, line);
+
 	// Loop
+	while (!inputFile.eof())
+	{
+		args.clear();
+		pos = 0;
+		id = -1;
 
 		// Parse CSV data entry
+		std::getline(inputFile, line);
+
+		std::stringstream stream(line);
+		std::getline(stream, node.countryCode, ',');
+		std::getline(stream, node.shortName, ',');
+		std::getline(stream, node.tableName, ',');
+		std::getline(stream, node.longName, ',');
+		std::getline(stream, node.alphaCode, ',');
+		std::getline(stream, node.currencyUnit, ',');
+		std::getline(stream, node.region, ',');
+		std::getline(stream, node.wb2Code, ',');
+		std::getline(stream, node.lastPopCensus, '\n');
 
 		// Get hashed values from long name
+		for (char c : node.longName) {
+			pos += c;
+		}
+		pos = pos % 353;
+		id = pos % dhtRingSize;
 
 		// Store DHT Entry
+		args.push_back("store");
+		args.push_back(std::to_string(id));
+		args.push_back(std::to_string(pos));
+		args.push_back(node.countryCode);
+		args.push_back(node.shortName);
+		args.push_back(node.tableName);
+		args.push_back(node.longName);
+		args.push_back(node.alphaCode);
+		args.push_back(node.currencyUnit);
+		args.push_back(node.region);
+		args.push_back(node.wb2Code);
+		args.push_back(node.lastPopCensus);
+
+		StoreDHTEntry(args);
+	}
 }
 
 void Client::RebuildDHT()
@@ -568,15 +621,47 @@ void Client::SetDHTPeerInfo(std::vector<std::string> args)
 void Client::StoreDHTEntry(std::vector<std::string> args)
 {
 	// Check if entry belongs to self
+	if (stoi(args[1]) == self.dhtID)
+	{
+		// Add entry to DHT
+		int i = 3;
+		HashNode* newNode = new HashNode;
+		newNode->countryCode = args[i++];
+		newNode->shortName = args[i++];
+		newNode->tableName = args[i++];
+		newNode->longName = args[i++];
+		newNode->alphaCode = args[i++];
+		newNode->currencyUnit = args[i++];
+		newNode->region = args[i++];
+		newNode->wb2Code = args[i++];
+		newNode->lastPopCensus = args[i++];
+		newNode->next = NULL;
 
-		// Add to DHT
+		int pos = stoi(args[2]);
+
+		// If hashtable position is empty, set new node
+		if (hashTable[pos] == NULL)
+		{
+			hashTable[pos] = newNode;
+			return;
+		}
+
+		// Otherwise add to end of hashtable position
+		HashNode* node = hashTable[pos];
+
+		while (node->next != NULL)
+		{
+			node = node->next;
+		}
+
+		node->next = newNode;
+
+		return;
+	}
 
 	// Else
-		
-		// Format Message	
-	
-		// Send through DHT network
-
+	// Send through DHT network
+	SendMessageNoResponse(rightSocket, args);
 }
 
 std::vector<std::string> Client::SendMessageWResponse(Socket socket, std::string msg)
