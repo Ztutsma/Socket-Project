@@ -18,13 +18,13 @@ public:
 
 	bool RequestDHTSetup(std::vector<std::string> args);
 
-	void RequestJoinDHT(std::vector<std::string> args);
+	bool RequestJoinDHT(std::vector<std::string> args);
 
-	void RequestLeaveDHT(std::vector<std::string> args);
+	bool RequestLeaveDHT(std::vector<std::string> args);
 
-	void RequestRebuildDHT();
+	bool RequestRebuildDHT();
 
-	void RequestDHTTearddown();
+	bool RequestDHTTearddown();
 
 	bool RequestQueryDHT(std::vector<std::string> args);
 

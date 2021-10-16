@@ -252,10 +252,9 @@ bool Client::RequestDHTSetup(std::vector<std::string> args)
 
 	// Build DHT
 	BuildDHT();
-
 }
 
-void Client::RequestJoinDHT(std::vector<std::string> args)
+bool Client::RequestJoinDHT(std::vector<std::string> args)
 {
 	// Format message
 
@@ -282,7 +281,7 @@ void Client::RequestJoinDHT(std::vector<std::string> args)
 		// Tell Server DHT has been rebuilt
 }
 
-void Client::RequestLeaveDHT(std::vector<std::string> args)
+bool Client::RequestLeaveDHT(std::vector<std::string> args)
 {
 	// Format message
 
@@ -312,12 +311,12 @@ void Client::RequestLeaveDHT(std::vector<std::string> args)
 
 }
 
-void Client::RequestRebuildDHT()
+bool Client::RequestRebuildDHT()
 {
 
 }
 
-void Client::RequestDHTTearddown()
+bool Client::RequestDHTTearddown()
 {
 
 }
@@ -461,7 +460,10 @@ void Client::HandleMessage(std::string msg)
 	{
 		SetDHTPeerInfo(args);
 	}
-
+	if (args[0] == "store")
+	{
+		StoreDHTEntry(args);
+	}
 }
 
 void Client::BuildDHTNetwork(std::vector<std::string> args)
