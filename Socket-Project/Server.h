@@ -1,17 +1,8 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <stdio.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <thread>
-#include <time.h>
+#include "socket-helper.h"
 #include "Parser.h"
 
-#define BUFFERMAX 1000
 
 class Server
 {
@@ -21,40 +12,6 @@ public:
 	void StartServer();
 
 private:
-	enum PeerState
-	{
-		Free = 0,
-		Leader,
-		InDHT
-	};
-
-	struct Peer
-	{
-		std::string uname;
-		std::string IPAddr;
-		int leftPort;
-		int rightPort;
-		int queryPort;
-		PeerState state;
-	};
-
-	struct Socket
-	{
-		int socket;
-		struct sockaddr_in address;
-		int port;
-	};
-
-	struct Message
-	{
-		std::string inMsg;
-		int msgSize;
-		char* outMsg;
-
-		struct sockaddr_in address;
-		unsigned int addrLen;
-		char buffer[BUFFERMAX];
-	};
 
 	enum DHTStatus
 	{

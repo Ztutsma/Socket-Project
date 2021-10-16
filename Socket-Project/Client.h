@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include <iostream>
-#include <vector>
+#include "socket-helper.h"
+#include "Parser.h"
 
 class Client
 {
