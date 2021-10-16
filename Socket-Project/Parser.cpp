@@ -24,6 +24,8 @@ std::vector<std::string> ParseUInput(std::string input)
 
 	while (std::getline(stream, segment, ' '))
 	{
+		// Convert strings to lowercase
+		std::transform(segment.begin(), segment.end(), segment.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
 		args.push_back(segment);
 	}
 
