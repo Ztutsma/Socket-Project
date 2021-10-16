@@ -11,6 +11,8 @@ void DieWithError(const char* errorMessage) // External error handling function
 
 int main(int argc, char* argv[])
 {
+	std::string userInput = "";
+
 	// Set Server Port & IP Address
 	std::string serverIP;
 	int serverPort;
@@ -28,7 +30,8 @@ int main(int argc, char* argv[])
 	while (!servIPValid)
 	{
 		std::cout << "Please enter a valid IPV4 address for the server: ";
-		std::cin >> serverIP;
+		std::getline(std::cin, userInput);
+		serverIP = userInput;
 
 		servIPValid = ValidateIPAddress(serverIP);
 	}
@@ -36,22 +39,19 @@ int main(int argc, char* argv[])
 	while (serverPort < 28500 || serverPort > 28999)
 	{
 		std::cout << "Please enter a valid port number for the server (28500-28999): ";
-		std::cin >> serverPort;
+		std::getline(std::cin, userInput);
+		serverPort = stoi(userInput);
 	}
 
 	printf("Server IP address: %s\n", serverIP.c_str());
 	printf("Server port: %d\n", serverPort);
 
-	std::cin.clear();
-	//std::cin.ignore(10000, '\n');
 
 	// Create Client
 	Client* client = new Client(serverIP, serverPort);
 
 
 	// Begin client user input loop
-	std::string userInput = "";
-	std::getline(std::cin, userInput);
 	std::vector<std::string> args;
 
 	while (userInput != "quit" && userInput != "exit")
@@ -62,8 +62,6 @@ int main(int argc, char* argv[])
 		// Remove leading whitespace
 		userInput = userInput.substr(userInput.find_first_not_of(" \n\t\r\f\v"));
 
-		std::cin.clear();
-
 		// Parse user input into list of arguments
 		args = ParseUInput(userInput);
 
@@ -73,7 +71,7 @@ int main(int argc, char* argv[])
 			if (args.size() != 6)
 			{
 				printf("Incorrect format used.\n");
-				printf("Correct format is: register username IPaddress Port# Port# Port#\n");
+				printf("Correct format is: register 'username' 'IPaddress' 'Port#' 'Port#' 'Port#'\n");
 				continue;
 			}
 			if (client->RequestRegister(args))
@@ -85,12 +83,24 @@ int main(int argc, char* argv[])
 				printf("Registration failed\n");
 			}
 		}
-		if (strcasecmp(args[0].c_str(), "deregister") == 0)
+		if (args[0] == "deregister")
 		{
-			client->RequestDeregister(args);
+			if (args.size() < 2)
+			{
+				printf("Incorrect format used.\n");
+				printf("Correct format is: deregister 'username'\n");
+				continue;
+			}
+			if (client->RequestDeregister(args))
+			{
+				printf("Deregistration successful\n");
+			}
+			else
+			{
+				printf("Deregistration failed\n");
+			}
 		}
 	}
-
 	return 0;
 }
 
@@ -141,9 +151,44 @@ bool Client::RequestRegister(std::vector<std::string> args)
 	// Save argument info
 	std::string username = args[1];
 	std::string IPAddress = args[2];
-	std::string leftPort = args[3];
-	std::string rightPort = args[4];
-	std::string queryPort = args[5];
+	int leftPort = stoi(args[3]);
+	int rightPort = stoi(args[4]);
+	int queryPort = stoi(args[5]);
+
+	// Validate Client Ports
+	std::string userInput = "";
+	while (leftPort < 28500 || leftPort > 28999)
+	{
+		std::cout << "Please enter a valid port number for the left port (28500-28999): ";
+		std::getline(std::cin, userInput);
+		leftPort = stoi(userInput);
+	}
+	if (leftPort != stoi(args[3]))
+	{
+		args[3] = std::to_string(leftPort);
+	}
+
+	while (rightPort < 28500 || rightPort > 28999)
+	{
+		std::cout << "Please enter a valid port number for the right port (28500-28999): ";
+		std::getline(std::cin, userInput);
+		rightPort = stoi(userInput);
+	}
+	if (rightPort != stoi(args[4]))
+	{
+		args[4] = std::to_string(rightPort);
+	}
+
+	while (queryPort < 28500 || queryPort > 28999)
+	{
+		std::cout << "Please enter a valid port number for the query port (28500-28999): ";
+		std::getline(std::cin, userInput);
+		queryPort = stoi(userInput);
+	}
+	if (queryPort != stoi(args[5]))
+	{
+		args[5] = std::to_string(queryPort);
+	}
 
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
@@ -157,26 +202,35 @@ bool Client::RequestRegister(std::vector<std::string> args)
 	// Set Self's Username, IP Address, & Ports
 	self.uname = username;
 	self.IPAddr = IPAddress;
-	self.leftPort = stoi(leftPort);
-	self.rightPort = stoi(rightPort);
-	self.queryPort = stoi(queryPort);
+	self.leftPort = leftPort;
+	self.rightPort = rightPort;
+	self.queryPort = queryPort;
 
 	// Start Client threads
-
+	StartClient();
 
 	return true;
 }
 
 bool Client::RequestDeregister(std::vector<std::string> args)
 {
-	// Format message
-
 	// Message server
-
-	// Wait for response
+	args = SendMessageWResponse(serverSocket, args);
 
 	// Check if successful
+	if (args[0] != "SUCCESS")
+	{
+		return false;
+	}
 
+	// Delete references to self
+	self.uname = "";
+	self.IPAddr = "";
+	self.leftPort = 0;
+	self.rightPort = 0;
+	self.queryPort = 0;
+
+	return true;
 }
 
 bool Client::RequestDHTSetup(std::vector<std::string> args)
