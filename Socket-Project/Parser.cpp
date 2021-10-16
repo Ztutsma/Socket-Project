@@ -39,7 +39,7 @@ std::string FormatMessage(std::vector<std::string> args)
 
 	for (int i = 0; i < args.size(); i++)
 	{
-		msg += args[1] + ";";
+		msg += args[i] + ";";
 	}
 
 	return msg;
