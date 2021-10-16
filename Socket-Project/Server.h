@@ -12,16 +12,6 @@ public:
 	void StartServer();
 
 private:
-
-	enum DHTStatus
-	{
-		None = 0,
-		Running,
-		Building,
-		Rebuilding,
-		Teardown
-	};
-
 	// Socket/Message variables
 	Socket serverSocket;
 	Message message;
@@ -33,7 +23,6 @@ private:
 	Peer* leader;
 	Peer* cachedPeer;
 	std::vector<Peer> peers;
-	DHTStatus dhtStatus = None;
 	
 	void ListenToPort();
 

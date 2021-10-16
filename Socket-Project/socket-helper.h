@@ -46,3 +46,14 @@ struct Message
 	unsigned int addrLen;
 	char buffer[BUFFERMAX];
 };
+
+enum DHTStatus
+{
+	None = 0,
+	Running,
+	Building,
+	Rebuilding,
+	Teardown
+};
+
+DHTStatus dhtStatus = None;
