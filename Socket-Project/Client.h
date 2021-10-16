@@ -57,9 +57,13 @@ private:
 
 	void StoreDHTEntry(std::vector<std::string> args);
 
-	std::vector<std::string> SendMessage(Socket socket, std::string msg);
+	std::vector<std::string> SendMessageWResponse(Socket socket, std::string msg);
 
-	std::vector<std::string> SendMessage(Socket socket, std::vector<std::string> args);
+	std::vector<std::string> SendMessageWResponse(Socket socket, std::vector<std::string> args);
+
+	void SendMessageNoResponse(Socket socket, std::string msg);
+
+	void SendMessageNoResponse(Socket socket, std::vector<std::string> args);
 };
 
 bool ValidateIPAddress(std::string input);

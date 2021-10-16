@@ -146,7 +146,7 @@ bool Client::RequestRegister(std::vector<std::string> args)
 	std::string queryPort = args[5];
 
 	// Message server
-	args = SendMessage(serverSocket, args);
+	args = SendMessageWResponse(serverSocket, args);
 
 	// Check if successful
 	if (args[0] != "SUCCESS")
@@ -161,7 +161,7 @@ bool Client::RequestRegister(std::vector<std::string> args)
 	self.rightPort = stoi(rightPort);
 	self.queryPort = stoi(queryPort);
 
-	// Start Client
+	// Start Client threads
 
 
 	return true;
@@ -393,39 +393,59 @@ void Client::StoreDHTEntry(std::vector<std::string> args)
 
 }
 
-std::vector<std::string> Client::SendMessage(Socket socket, std::string msg)
+std::vector<std::string> Client::SendMessageWResponse(Socket socket, std::string msg)
 {
-	// Send message to socket
-
-	// Wait for Response
-
-	// Parse response
-
-	// Return response as a list of strings
-}
-
-std::vector<std::string> Client::SendMessage(Socket socket, std::vector<std::string> args)
-{
-	// Format Message
-	Message msg;
-	msg.addrLen = sizeof(msg.address);
-	msg.address = socket.address;
-	std::string outMessage = FormatMessage(args);
-	msg.outMsg = const_cast<char*>(outMessage.c_str());
-	//msg.outMsg = const_cast<char*>(FormatMessage(args).c_str());
+	// Build Message
+	Message message;
+	message.addrLen = sizeof(message.address);
+	message.address = socket.address;
+	message.outMsg = const_cast<char*>(msg.c_str());
 
 	// Send message to socket
-	sendto(socket.socket, msg.outMsg, strlen(msg.outMsg), 0, (struct sockaddr*)&msg.address, sizeof(msg.address));
+	sendto(socket.socket, message.outMsg, strlen(message.outMsg), 0, (struct sockaddr*)&message.address, sizeof(message.address));
 
 	// Wait for Response
-	msg.msgSize = recvfrom(socket.socket, msg.buffer, BUFFERMAX, 0, (struct sockaddr*) &msg.address, &msg.addrLen);
-	msg.buffer[msg.msgSize] = '\0';
-	msg.inMsg = std::string(msg.buffer);
+	message.msgSize = recvfrom(socket.socket, message.buffer, BUFFERMAX, 0, (struct sockaddr*)&message.address, &message.addrLen);
+	message.buffer[message.msgSize] = '\0';
+	message.inMsg = std::string(message.buffer);
 
 	// Parse response
-	args.clear();
-	args = ParseMessage(msg.inMsg);
+	std::vector<std::string> args;
+	args = ParseMessage(message.inMsg);
 
 	// Return response as a list of strings
 	return args;
+}
+
+std::vector<std::string> Client::SendMessageWResponse(Socket socket, std::vector<std::string> args)
+{
+	// Format Message
+	std::string outMessage = FormatMessage(args);
+
+	// Send formatted message
+	args.clear();
+	args = SendMessageWResponse(socket, outMessage);
+
+	// Return response as a list of strings
+	return args;
+}
+
+void Client::SendMessageNoResponse(Socket socket, std::string msg)
+{
+	// Build Message
+	Message message;
+	message.addrLen = sizeof(message.address);
+	message.address = socket.address;
+	message.outMsg = const_cast<char*>(msg.c_str());
+
+	// Send message to socket
+	sendto(socket.socket, message.outMsg, strlen(message.outMsg), 0, (struct sockaddr*)&message.address, sizeof(message.address));
+}
+
+void Client::SendMessageNoResponse(Socket socket, std::vector<std::string> args) {
+	// Format Message
+	std::string outMessage = FormatMessage(args);
+	
+	// Send formatted message
+	SendMessageNoResponse(socket, outMessage);
 }
