@@ -86,6 +86,8 @@ void Server::ListenToPort()
 		message.buffer[message.msgSize] = '\0';
 		message.inMsg = std::string(message.buffer);
 
+		printf("\n%s\n", message.inMsg.c_str());
+
 		// Handle message
 		message.outMsg = const_cast<char*>(HandleMessage(message.inMsg).c_str());
 
