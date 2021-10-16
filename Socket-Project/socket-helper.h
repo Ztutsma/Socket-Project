@@ -25,6 +25,7 @@ struct Peer
 	int leftPort;
 	int rightPort;
 	int queryPort;
+	int dhtID;
 	PeerState state;
 };
 
