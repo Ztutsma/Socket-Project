@@ -3,6 +3,11 @@
 
 #include "Client.h"
 
+void DieWithError(const char* errorMessage) // External error handling function
+{
+	perror(errorMessage);
+	exit(1);
+}
 
 int main(int argc, char* argv[])
 {
@@ -34,8 +39,11 @@ int main(int argc, char* argv[])
 		std::cin >> serverPort;
 	}
 
+	printf("Server IP address: %s\n", serverIP.c_str());
+	printf("Server port: %d\n", serverPort);
+
 	std::cin.clear();
-	std::cin.ignore(10000, '\n');
+	//std::cin.ignore(10000, '\n');
 
 	// Create Client
 	Client* client = new Client(serverIP, serverPort);
@@ -43,6 +51,7 @@ int main(int argc, char* argv[])
 
 	// Begin client user input loop
 	std::string userInput = "";
+	std::getline(std::cin, userInput);
 	std::vector<std::string> args;
 
 	while (userInput != "quit" && userInput != "exit")
@@ -61,13 +70,19 @@ int main(int argc, char* argv[])
 		// Switch off first argument
 		if (args[0] == "register")
 		{
+			if (args.size() != 6)
+			{
+				printf("Incorrect format used.\n");
+				printf("Correct format is: register username IPaddress Port# Port# Port#\n");
+				continue;
+			}
 			if (client->RequestRegister(args))
 			{
-				printf("Registration successful");
+				printf("Registration successful\n");
 			}
 			else
 			{
-				printf("Registration unsuccessful");
+				printf("Registration failed\n");
 			}
 		}
 		if (strcasecmp(args[0].c_str(), "deregister") == 0)
@@ -134,7 +149,7 @@ bool Client::RequestRegister(std::vector<std::string> args)
 	args = SendMessage(serverSocket, args);
 
 	// Check if successful
-	if (args[0] != "SUCCESSFUL")
+	if (args[0] != "SUCCESS")
 	{
 		return false;
 	}
@@ -395,10 +410,12 @@ std::vector<std::string> Client::SendMessage(Socket socket, std::vector<std::str
 	Message msg;
 	msg.addrLen = sizeof(msg.address);
 	msg.address = socket.address;
-	msg.outMsg = const_cast<char*>(FormatMessage(args).c_str());
+	std::string outMessage = FormatMessage(args);
+	msg.outMsg = const_cast<char*>(outMessage.c_str());
+	//msg.outMsg = const_cast<char*>(FormatMessage(args).c_str());
 
 	// Send message to socket
-	sendto(socket.socket, msg.outMsg, strlen(msg.outMsg), 0, (struct sockaddr*)&msg.address, sizeof(msg.addrLen));
+	sendto(socket.socket, msg.outMsg, strlen(msg.outMsg), 0, (struct sockaddr*)&msg.address, sizeof(msg.address));
 
 	// Wait for Response
 	msg.msgSize = recvfrom(socket.socket, msg.buffer, BUFFERMAX, 0, (struct sockaddr*) &msg.address, &msg.addrLen);

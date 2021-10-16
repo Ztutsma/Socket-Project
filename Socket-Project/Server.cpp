@@ -1,5 +1,11 @@
 #include "Server.h"
 
+void DieWithError(const char* errorMessage) // External error handling function
+{
+	perror(errorMessage);
+	exit(1);
+}
+
 int main(int argc, char* argv[])
 {
 	int serverPort;
@@ -22,7 +28,7 @@ int main(int argc, char* argv[])
 	// Begin user input loop
 	std::string userInput = "";
 	std::cin.clear();
-	std::cin.ignore(10000, '\n');
+	//std::cin.ignore(10000, '\n');
 
 	while (!(strcasecmp(userInput.c_str(), "quit") == 0) && !(strcasecmp(userInput.c_str(), "exit") == 0))
 	{
@@ -42,14 +48,18 @@ Server::Server(int port)
 {
 	// Build Server Socket
 	serverSocket.port = port;
-	serverSocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if ((serverSocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		DieWithError("server: socket() failed");
 
 	memset(&serverSocket.address, 0, sizeof(serverSocket.address));		// Zero out structure
 	serverSocket.address.sin_family = AF_INET;							// Internet address family
 	serverSocket.address.sin_addr.s_addr = htonl(INADDR_ANY);				// Any incoming interface
 	serverSocket.address.sin_port = htons(serverSocket.port);				// Local port
 
-	bind(serverSocket.socket, (struct sockaddr*)&serverSocket.address, sizeof(serverSocket.address));
+	if (bind(serverSocket.socket, (struct sockaddr*)&serverSocket.address, sizeof(serverSocket.address)) < 0)
+	{
+		DieWithError("server: bind() failed");
+	}
 }
 
 Server::~Server()
@@ -75,12 +85,12 @@ void Server::ListenToPort()
 
 		message.buffer[message.msgSize] = '\0';
 		message.inMsg = std::string(message.buffer);
-		
+
 		// Handle message
 		message.outMsg = const_cast<char*>(HandleMessage(message.inMsg).c_str());
 
 		// Reply to client
-		sendto(serverSocket.socket, message.outMsg, strlen(message.outMsg), 0, (struct sockaddr*)&message.address, sizeof(message.addrLen));
+		sendto(serverSocket.socket, message.outMsg, strlen(message.outMsg), 0, (struct sockaddr*)&message.address, sizeof(message.address));
 	}
 }
 
@@ -191,7 +201,6 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 	newPeer.state = Free;
 
 	peers.push_back(newPeer);
-	printf("New Peer Added: %s %s", newPeer.uname.c_str(), newPeer.IPAddr.c_str());
 
 	return "SUCCESS";
 }
