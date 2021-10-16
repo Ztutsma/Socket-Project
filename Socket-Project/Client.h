@@ -2,32 +2,36 @@
 
 #include "socket-helper.h"
 #include "Parser.h"
+#include <regex>
+
 
 class Client
 {
 public:
-	Client();
+	Client(std::string IPAddress, int serverPort);
 	~Client();
 
 	bool RequestRegister(std::vector<std::string> args);
 
-	bool RequestDeregister();
+	bool RequestDeregister(std::vector<std::string> args);
 
-	bool RequestDHTSetup();
+	bool RequestDHTSetup(std::vector<std::string> args);
 
-	void RequestJoinDHT();
+	void RequestJoinDHT(std::vector<std::string> args);
 
-	void RequestLeaveDHT();
+	void RequestLeaveDHT(std::vector<std::string> args);
 
 	void RequestRebuildDHT();
 
 	void RequestDHTTearddown();
 
-	bool RequestQueryDHT();
+	bool RequestQueryDHT(std::vector<std::string> args);
 
 	void QueryDHT(std::vector<std::string> args);
 
 private:
+	Socket serverSocket;
+
 	void StartClient();
 
 	void BuildLeftSocket();

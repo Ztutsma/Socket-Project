@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	while (!(strcasecmp(userInput.c_str(), "quit") == 0) && !(strcasecmp(userInput.c_str(), "exit") == 0))
 	{
 		// Loop until user enters "quit" or "exit"
-		std::getline(std::cin, userInput);
+		std::cin >> userInput;
 
 		// Remove leading whitespace
 		userInput = userInput.substr(userInput.find_first_not_of(" \n\t\r\f\v"));
