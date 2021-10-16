@@ -235,23 +235,20 @@ bool Client::RequestDeregister(std::vector<std::string> args)
 
 bool Client::RequestDHTSetup(std::vector<std::string> args)
 {
-	// Format message
-
 	// Message server
-
-	// Wait for response
-
-	// Parse response
+	args = SendMessageWResponse(serverSocket, args);
 
 	// Check if successful
+	if (args[0] != "SUCCESS");
+	{
+		return false;
+	}
 
-		// Set self as leader
+	// Build DHT Network
+	BuildDHTNetwork(args);
 
-		// Add peers to list of nodes in network
-
-		// Build DHT Network 
-
-		// Build DHT
+	// Build DHT
+	BuildDHT();
 
 }
 
@@ -350,6 +347,7 @@ void Client::StartClient()
 	// Build Sockets
 	BuildLeftSocket();
 	BuildQuerySocket();
+	BuildRightSocket();
 
 	// Start Listening Threads
 	threads.push_back(std::thread(&Client::ListenLeftPort, this));
@@ -373,18 +371,6 @@ void Client::BuildLeftSocket()
 	}
 }
 
-void Client::BuildRightSocket()
-{
-	rightSocket.port = rightPeer.leftPort;
-	if ((rightSocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		DieWithError("server: socket() failed");
-
-	memset(&rightSocket.address, 0, sizeof(rightSocket.address));
-	rightSocket.address.sin_family = AF_INET;
-	rightSocket.address.sin_addr.s_addr = inet_addr(rightPeer.IPAddr.c_str());
-	rightSocket.address.sin_port = htons(rightSocket.port);
-}
-
 void Client::BuildQuerySocket()
 {
 	querySocket.port = self.queryPort;
@@ -400,6 +386,22 @@ void Client::BuildQuerySocket()
 	{
 		DieWithError("server: bind() failed");
 	}
+}
+
+void Client::BuildRightSocket()
+{
+	if ((rightSocket.socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		DieWithError("server: socket() failed");
+
+	memset(&rightSocket.address, 0, sizeof(rightSocket.address));
+	rightSocket.address.sin_family = AF_INET;
+}
+
+void Client::UpdateRightSocket()
+{
+	rightSocket.port = rightPeer.leftPort;
+	rightSocket.address.sin_addr.s_addr = inet_addr(rightPeer.IPAddr.c_str());
+	rightSocket.address.sin_port = htons(rightSocket.port);
 }
 
 void Client::ListenLeftPort()
@@ -455,9 +457,64 @@ void Client::HandleMessage(std::string msg)
 
 }
 
-void Client::BuildDHTNetwork()
+void Client::BuildDHTNetwork(std::vector<std::string> args)
 {
+	// Add peers to list of peers in dht
+	Peer peer;
+	for (int i = 1; i < args.size(); i+= 5)
+	{
+		peer.uname = args[i];
+		peer.IPAddr = args[i + 1];
+		peer.leftPort = stoi(args[i + 2]);
+		peer.rightPort = stoi(args[i + 3]);
+		peer.queryPort = stoi(args[i + 4]);
+
+		dhtPeers.push_back(peer);
+	}
+
 	// Tell peers in network to set IDs and neighbours
+	int leftPeerIndex, rightPeerIndex;
+	int ringSize = dhtPeers.size();
+	for (int i = 1; i < ringSize; i++)
+	{
+		leftPeerIndex = i - 1;
+		rightPeerIndex = (i + 1) % ringSize;
+		args.clear();
+		args.push_back("set-id");
+		args.push_back(std::to_string(i));									// DHT ID of node i
+		args.push_back(std::to_string(ringSize));							// Ring size of DHT
+		args.push_back(dhtPeers[leftPeerIndex].uname);						// Left peer of node i
+		args.push_back(dhtPeers[leftPeerIndex].IPAddr);						// IP Address of node's left peer
+		args.push_back(std::to_string(dhtPeers[leftPeerIndex].leftPort));	// Left peer's left port
+		args.push_back(std::to_string(dhtPeers[leftPeerIndex].rightPort));	// Left peer's right port
+		args.push_back(std::to_string(dhtPeers[leftPeerIndex].queryPort));	// Left peer's query port
+
+		args.push_back(dhtPeers[rightPeerIndex].uname);						// Right peer of node i
+		args.push_back(dhtPeers[rightPeerIndex].IPAddr);					// IP Address of node's right peer
+		args.push_back(std::to_string(dhtPeers[rightPeerIndex].leftPort));	// Right peer's left port
+		args.push_back(std::to_string(dhtPeers[rightPeerIndex].rightPort));	// Right peer's right port
+		args.push_back(std::to_string(dhtPeers[rightPeerIndex].queryPort));	// Left peer's query port
+
+		// Temporarily set right peer to target node and update socket
+		rightPeer = dhtPeers[i];
+		UpdateRightSocket();
+
+		// Send message to peer
+		SendMessageNoResponse(rightSocket, args);
+	}
+
+	// Set DHT Peer info of leader
+	leftPeerIndex = ringSize - 1;
+	rightPeerIndex = 1;
+
+	self.dhtID = 0;
+	self.state = Leader;
+	dhtRingSize = ringSize;
+	leftPeer = dhtPeers[leftPeerIndex];
+	rightPeer = dhtPeers[rightPeerIndex];
+
+	// Update right socket of leader to "permanent" right peer
+	UpdateRightSocket();
 }
 
 void Client::BuildDHT()

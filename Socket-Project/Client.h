@@ -39,18 +39,24 @@ private:
 	Peer self;
 	Peer rightPeer;
 	Peer leftPeer;
-	std::vector<Peer> dhtPeers;
+
 
 	// Thread Variables
 	std::vector<std::thread> threads;
+
+	// DHT Variables
+	std::vector<Peer> dhtPeers;
+	int dhtRingSize;
 
 	void StartClient();
 
 	void BuildLeftSocket();
 
+	void BuildQuerySocket();
+
 	void BuildRightSocket();
 
-	void BuildQuerySocket();
+	void UpdateRightSocket();
 
 	void ListenLeftPort();
 
@@ -58,7 +64,7 @@ private:
 
 	void HandleMessage(std::string msg);
 
-	void BuildDHTNetwork();
+	void BuildDHTNetwork(std::vector<std::string> args);
 
 	void BuildDHT();
 
