@@ -833,6 +833,11 @@ void Client::BuildDHT()
 	int pos;
 	int id;
 
+#ifdef DEBUG
+	printf("Before Reading File");
+#endif // DEBUG
+
+
 	// Discard first line of file
 	std::getline(inputFile, line);
 
@@ -880,6 +885,10 @@ void Client::BuildDHT()
 
 		StoreDHTEntry(args);
 	}
+
+#ifdef DEBUG
+	printf("After Reading File");
+#endif // DEBUG
 }
 
 void Client::JoinDHT()
@@ -971,15 +980,27 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 	// Tear down DHT
 	HashNode* tempNode;
 
-	for (HashNode* node : hashTable) {
-
-		while (node != NULL)
+	for (int i = 0; i < hashTable.size(); i++)
+	{
+		while (hashTable[i] != NULL)
 		{
-			tempNode = node;
-			node = node->next;
+			tempNode = hashTable[i];
+			hashTable[i] = hashTable[i]->next;
 			delete(tempNode);
 		}
 	}
+
+	//for (HashNode* node : hashTable) {
+
+	//	while (node != NULL)
+	//	{
+	//		tempNode = node;
+	//		node = node->next;
+	//		delete(tempNode);
+	//	}
+
+	//	node = NULL;
+	//}
 
 	// Check if self requested teardown
 	if (dhtStatus == Teardown)
@@ -1038,8 +1059,18 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 
 void Client::RebuildDHT(Message message, std::vector<std::string> args)
 {
+
+#ifdef DEBUG
+	printf("Rebuild: Before Build");
+#endif // DEBUG
+
 	// Build DHT
 	BuildDHT();
+
+#ifdef DEBUG
+	printf("Rebuild: After Build");
+#endif // DEBUG
+
 
 	// Reply that DHT is rebuilt
 	args.clear();
@@ -1054,6 +1085,7 @@ void Client::ResetDHTID(std::vector<std::string> args)
 	if (self.dhtID == -1)
 	{
 		ExitDHT();
+		return;
 	}
 
 	int newID = stoi(args[1]);
