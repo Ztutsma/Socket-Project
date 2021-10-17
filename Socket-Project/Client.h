@@ -41,7 +41,6 @@ private:
 	Peer rightPeer;
 	Peer leftPeer;
 
-
 	// Thread Variables
 	std::vector<std::thread> threads;
 	bool leftDht = false;
@@ -78,7 +77,7 @@ private:
 
 	void BuildRightSocket();
 
-	void UpdateRightSocket();
+	void UpdateRightSocket(int port);
 
 	void ListenLeftPort();
 
@@ -107,6 +106,12 @@ private:
 	void ResetDHTPeerInfo(std::vector<std::string> args);
 
 	void StoreDHTEntry(std::vector<std::string> args);
+
+	std::vector<std::string> GetDHTEntry(std::string longName, int pos);
+
+	void ReturnDHTEntry(Message message, std::vector<std::string> args);
+
+	void PrintDHTEntry(std::vector<std::string> args);
 
 	std::vector<std::string> SendMessageWResponse(Socket socket, std::string msg);
 

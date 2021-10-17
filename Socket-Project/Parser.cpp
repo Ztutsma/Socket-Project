@@ -32,6 +32,26 @@ std::vector<std::string> ParseUInput(std::string input)
 	return args;
 }
 
+std::vector<std::string> FormatQuery(std::vector<std::string> args)
+{
+	std::string command = args[0];
+	std::string query = "";
+
+	int i = 1;
+	while (i < args.size() - 1)
+	{
+		query += args[i] + " ";
+		i++;
+	}
+	query += args[i];
+
+	args.clear();
+	args.push_back(command);
+	args.push_back(query);
+
+	return args;
+}
+
 // Converts list of arguments into a message
 std::string FormatMessage(std::vector<std::string> args)
 {

@@ -163,6 +163,38 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		// Query DHT
+		if (args[0] == "query-dht")
+		{
+			if (args.size() < 2)
+			{
+				printf("Incorrect format used.\n");
+				printf("Correct format is: query-dht 'username'\n");
+				continue;
+			}
+
+			if (client->RequestQueryDHT(args))
+			{
+				printf("Connected to DHT successful\n");
+			}
+			else
+			{
+				printf("Query DHT failed\n");
+			}
+		}
+
+		if (args[0] == "query")
+		{
+			if (args.size() < 2)
+			{
+				printf("Incorrect format used.\n");
+				printf("Correct format is: query 'Long Name'\n");
+				continue;
+			}
+
+			client->QueryDHT(args);
+		}
+
 		// Teardown DHT
 		if (args[0] == "teardown-dht")
 		{
@@ -172,10 +204,6 @@ int main(int argc, char* argv[])
 				printf("Correct format is: teardown-dht 'username'\n");
 				continue;
 			}
-
-			// TODO finish implementing
-			printf("NOT YET IMPLEMENTED");
-			continue;
 
 			if (client->RequestDHTTearddown(args))
 			{
@@ -363,7 +391,7 @@ bool Client::RequestJoinDHT(std::vector<std::string> args)
 	rightPeer.rightPort = stoi(args[i++]);
 	rightPeer.queryPort = stoi(args[i++]);
 
-	UpdateRightSocket();
+	UpdateRightSocket(rightPeer.leftPort);
 
 	// Begin Join DHT Process
 
@@ -495,25 +523,47 @@ bool Client::RequestDHTTearddown(std::vector<std::string> args)
 
 bool Client::RequestQueryDHT(std::vector<std::string> args)
 {
-	// Format message
-
 	// Message server
-
-	// Wait for response
+	args = SendMessageWResponse(serverSocket, args);
 
 	// Check if successful
+	if (args[0] != "SUCCESS")
+	{
+		return false;
+	}
 
+	// Set right peer to dht peer
+	int i = 1;
+
+	rightPeer.uname = args[i++];
+	rightPeer.IPAddr = args[i++];
+	rightPeer.leftPort = stoi(args[i++]);
+	rightPeer.rightPort = stoi(args[i++]);
+	rightPeer.queryPort = stoi(args[i++]);
+
+	UpdateRightSocket(rightPeer.queryPort);
+
+	return true;
 }
 
 void Client::QueryDHT(std::vector<std::string> args)
 {
 	// Format Message
+	args = FormatQuery(args);
 
 	// Message DHT member
+	args = SendMessageWResponse(rightSocket, args);
 
-	// Wait for response
+	// Check if response was received
+	if (args[0] != "SUCCESS" || args.size() != 10)
+	{
+		printf("Query Failed\n");
+		return;
+	}
 
 	// Print Response
+	PrintDHTEntry(args);
+
 }
 
 void Client::StartClient()
@@ -571,9 +621,9 @@ void Client::BuildRightSocket()
 	rightSocket.address.sin_family = AF_INET;
 }
 
-void Client::UpdateRightSocket()
+void Client::UpdateRightSocket(int port)
 {
-	rightSocket.port = rightPeer.leftPort;
+	rightSocket.port = port;
 	rightSocket.address.sin_addr.s_addr = inet_addr(rightPeer.IPAddr.c_str());
 	rightSocket.address.sin_port = htons(rightSocket.port);
 }
@@ -663,7 +713,10 @@ void Client::HandleMessage(Message message)
 	{
 		ResetDHTPeerInfo(args);
 	}
-
+	if (args[0] == "query")
+	{
+		ReturnDHTEntry(message, args);
+	}
 }
 
 void Client::BuildDHTNetwork(std::vector<std::string> args)
@@ -706,7 +759,7 @@ void Client::BuildDHTNetwork(std::vector<std::string> args)
 
 		// Temporarily set right peer to target node and update socket
 		rightPeer = dhtPeers[i];
-		UpdateRightSocket();
+		UpdateRightSocket(rightPeer.leftPort);
 
 		// Send message to peer
 		SendMessageNoResponse(rightSocket, args);
@@ -723,7 +776,7 @@ void Client::BuildDHTNetwork(std::vector<std::string> args)
 	rightPeer = dhtPeers[rightPeerIndex];
 
 	// Update right socket of leader to "permanent" right peer
-	UpdateRightSocket();
+	UpdateRightSocket(rightPeer.leftPort);
 }
 
 void Client::BuildDHT()
@@ -1004,7 +1057,7 @@ void Client::SetDHTPeerInfo(std::vector<std::string> args)
 	rightPeer.queryPort = stoi(args[i++]);
 
 	// Update right socket to new right peer
-	UpdateRightSocket();
+	UpdateRightSocket(rightPeer.leftPort);
 }
 
 void Client::ResetDHTPeerInfo(std::vector<std::string> args)
@@ -1028,7 +1081,7 @@ void Client::ResetDHTPeerInfo(std::vector<std::string> args)
 
 	if (resetPeer == &rightPeer)
 	{
-		UpdateRightSocket();
+		UpdateRightSocket(rightPeer.leftPort);
 	}
 
 	// If self is the one that initiated AddDHTPeer
@@ -1086,6 +1139,91 @@ void Client::StoreDHTEntry(std::vector<std::string> args)
 	// Else
 	// Send through DHT network
 	SendMessageNoResponse(rightSocket, args);
+}
+
+std::vector<std::string> Client::GetDHTEntry(std::string longName, int pos)
+{
+	std::vector<std::string> response;
+
+	HashNode* node = hashTable[pos];
+
+	while (node != NULL && node->longName != longName)
+	{
+		node = node->next;
+	}
+
+	// If node with longname wasnt found
+	if (node == NULL)
+	{
+		response.push_back("FAILURE");
+		return response;
+	}
+
+	response.push_back("SUCCESS");
+	response.push_back(node->countryCode);
+	response.push_back(node->shortName);
+	response.push_back(node->tableName);
+	response.push_back(node->longName);
+	response.push_back(node->alphaCode);
+	response.push_back(node->currencyUnit);
+	response.push_back(node->region);
+	response.push_back(node->wb2Code);
+	response.push_back(node->lastPopCensus);
+
+	return response;
+}
+
+void Client::ReturnDHTEntry(Message message, std::vector<std::string> args)
+{
+	int pos;
+	int id;
+	std::string longName = args[1];
+
+	// If position and ID have not been calculated yet
+	if (args.size() == 2)
+	{
+		// Get hashed values from long name
+		for (char c : longName) {
+			pos += c;
+		}
+		pos = pos % 353;
+		id = pos % dhtRingSize;
+		args.push_back(std::to_string(id));
+		args.push_back(std::to_string(pos));
+	}
+	else
+	{
+		id = stoi(args[2]);
+		pos = stoi(args[3]);
+	}
+
+	// If entry is stored in self
+	if (id == self.dhtID)
+	{
+		args = GetDHTEntry(longName, pos);
+		RespondToMessage(message, args);
+		return;
+	}
+
+	// Else pass through to right peer
+	args = SendMessageWResponse(rightSocket, args);
+	RespondToMessage(message, args);
+
+}
+
+void Client::PrintDHTEntry(std::vector<std::string> args)
+{
+	int i = 1;
+
+	printf("\nCountry Code:\t%s", args[i++]);
+	printf("\nShort Name:\t\t%s", args[i++]);
+	printf("\nTable Name:\t\t%s", args[i++]);
+	printf("\nLong Name:\t\t%s", args[i++]);
+	printf("\nAlpha Code:\t\t%s", args[i++]);
+	printf("\nCurrency Unit:\t%s", args[i++]);
+	printf("\nRegion:\t\t\t%s", args[i++]);
+	printf("\nWB2 Code:\t\t%s", args[i++]);
+	printf("\nLast Census:\t%s\n", args[i++]);
 }
 
 std::vector<std::string> Client::SendMessageWResponse(Socket socket, std::string msg)
