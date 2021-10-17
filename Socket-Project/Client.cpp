@@ -3,6 +3,8 @@
 
 #include "Client.h"
 
+#define CJDEBUG
+
 void DieWithError(const char* errorMessage) // External error handling function
 {
 	perror(errorMessage);
@@ -15,8 +17,14 @@ int main(int argc, char* argv[])
 
 	// Set Server Port & IP Address
 	std::string serverIP;
-	int serverPort;
+	int serverPort = 0;
 	bool servIPValid = false;
+
+#ifdef CJDEBUG
+	serverPort = 28500;
+	serverIP = "172.31.28.134";
+#endif // CJDEBUG
+
 
 	if (argc == 3)
 	{
@@ -263,6 +271,7 @@ Client::~Client()
 {
 }
 
+// Sends request to register as a Peer with the server
 bool Client::RequestRegister(std::vector<std::string> args)
 {
 	// Save argument info
@@ -329,6 +338,7 @@ bool Client::RequestRegister(std::vector<std::string> args)
 	return true;
 }
 
+// Sends a request to deregister as a Peer witht he server
 bool Client::RequestDeregister(std::vector<std::string> args)
 {
 	// Message server
@@ -355,13 +365,14 @@ bool Client::RequestDeregister(std::vector<std::string> args)
 	return true;
 }
 
+// Sends a request to create the DHT
 bool Client::RequestDHTSetup(std::vector<std::string> args)
 {
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
 
 	// Check if successful
-	if (args[0] != "SUCCESS");
+	if (args[0] != "SUCCESS")
 	{
 		return false;
 	}
@@ -371,6 +382,8 @@ bool Client::RequestDHTSetup(std::vector<std::string> args)
 
 	// Build DHT
 	BuildDHT();
+
+	return true;
 }
 
 bool Client::RequestJoinDHT(std::vector<std::string> args)
