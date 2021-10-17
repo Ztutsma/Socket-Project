@@ -3,7 +3,7 @@
 
 #include "Client.h"
 
-#define CJDEBUG
+#define DEBUG
 
 void DieWithError(const char* errorMessage) // External error handling function
 {
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 	int serverPort = 0;
 	bool servIPValid = false;
 
-#ifdef CJDEBUG
+#ifdef DEBUG
 	serverPort = 28500;
 	serverIP = "172.31.28.134";
 #endif // CJDEBUG
@@ -383,6 +383,17 @@ bool Client::RequestDHTSetup(std::vector<std::string> args)
 	// Build DHT
 	BuildDHT();
 
+	// Tell Server DHT is complete
+	args.clear();
+	args.push_back("dht-complete");
+	args.push_back(self.uname);
+	args = SendMessageWResponse(serverSocket, args);
+	
+	if (args[0] != "SUCCESS")
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -494,8 +505,17 @@ bool Client::RequestRebuildDHT()
 
 bool Client::RequestDHTTearddown(std::vector<std::string> args)
 {
+
+#ifdef DEBUG
+	printf("RTD0: %s", args[0].c_str());
+#endif // CJDEBUG
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
+
+#ifdef DEBUG
+	printf("RTD1: %s", args[0].c_str());
+#endif // CJDEBUG
+
 
 	// Check if successful
 	if (args[0] != "SUCCESS")
@@ -530,6 +550,10 @@ bool Client::RequestDHTTearddown(std::vector<std::string> args)
 	args.push_back(self.uname);
 
 	args = SendMessageWResponse(serverSocket, args);
+
+#ifdef DEBUG
+	printf("RTD2: %s", args[0].c_str());
+#endif // CJDEBUG
 
 	if (args[0] != "SUCCESS")
 	{
@@ -1006,6 +1030,10 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 
 		return;
 	}
+
+	// Tell next peer in ring to teardown
+	SendMessageNoResponse(rightSocket, args);
+	return;
 }
 
 void Client::RebuildDHT(Message message, std::vector<std::string> args)
