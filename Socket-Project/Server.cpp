@@ -386,9 +386,17 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 	// Set DHT status as being rebuilt
 	dhtStatus = Rebuilding;
 
-	//TODO add rest of AddDHTPeer method
 	// Reply with leader's info
+	args.clear();
+	args.push_back("SUCCESS");
+	args.push_back(leader->uname);
+	args.push_back(leader->IPAddr);
+	args.push_back(std::to_string(leader->leftPort));
+	args.push_back(std::to_string(leader->rightPort));
+	args.push_back(std::to_string(leader->queryPort));
 
+	std::string returnMessage = FormatMessage(args);
+	return returnMessage;
 }
 
 std::string Server::DelDHTPeer(std::vector <std::string> args)

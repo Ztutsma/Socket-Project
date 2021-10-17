@@ -24,7 +24,7 @@ public:
 
 	bool RequestRebuildDHT();
 
-	bool RequestDHTTearddown();
+	bool RequestDHTTearddown(std::vector<std::string> args);
 
 	bool RequestQueryDHT(std::vector<std::string> args);
 
@@ -44,10 +44,13 @@ private:
 
 	// Thread Variables
 	std::vector<std::thread> threads;
+	bool leftDht;
+	bool joinedDht;
 
 	// DHT Variables
 	std::vector<Peer> dhtPeers;
 	int dhtRingSize;
+	DHTStatus dhtStatus = None;
 
 	// Hashtable Node structure and list
 	struct HashNode
@@ -79,15 +82,27 @@ private:
 
 	void ListenQueryPort();
 
-	void HandleMessage(std::string msg);
+	void HandleMessage(Message message);
 
 	void BuildDHTNetwork(std::vector<std::string> args);
 
 	void BuildDHT();
 
-	void RebuildDHT();
+	void JoinDHT();
+
+	void ExitDHT();
+
+	void AddDHTPeer(std::vector<std::string> args);
+
+	void TeardownDHT(Message message, std::vector<std::string> args);
+
+	void RebuildDHT(Message message, std::vector<std::string> args);
+
+	void ResetDHTID(std::vector<std::string> args);
 
 	void SetDHTPeerInfo(std::vector<std::string> args);
+
+	void ResetDHTPeerInfo(std::vector<std::string> args);
 
 	void StoreDHTEntry(std::vector<std::string> args);
 
@@ -98,6 +113,8 @@ private:
 	void SendMessageNoResponse(Socket socket, std::string msg);
 
 	void SendMessageNoResponse(Socket socket, std::vector<std::string> args);
+
+	void RespondToMessage(Message message, std::vector<std::string> args);
 };
 
 bool ValidateIPAddress(std::string input);

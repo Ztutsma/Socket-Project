@@ -23,6 +23,7 @@ private:
 	Peer* leader;
 	Peer* cachedPeer;
 	std::vector<Peer> peers;
+	DHTStatus dhtStatus = None;
 	
 	void ListenToPort();
 

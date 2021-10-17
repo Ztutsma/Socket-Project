@@ -55,5 +55,3 @@ enum DHTStatus
 	Rebuilding,
 	Teardown
 };
-
-DHTStatus dhtStatus = None;
