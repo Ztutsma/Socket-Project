@@ -40,6 +40,7 @@ private:
 	Peer self;
 	Peer rightPeer;
 	Peer leftPeer;
+	Peer newPeer;
 
 	// Thread Variables
 	std::vector<std::thread> threads;
@@ -77,7 +78,7 @@ private:
 
 	void BuildRightSocket();
 
-	void UpdateRightSocket(int port);
+	void UpdateRightSocket(Peer peer);
 
 	void ListenLeftPort();
 
