@@ -22,6 +22,23 @@ std::vector<std::string> ParseUInput(std::string input)
 	std::string segment;
 	std::stringstream stream(input);
 
+	// Get first argument
+	std::getline(stream, segment, ' ');
+	// Convert string to lowercase
+	std::transform(segment.begin(), segment.end(), segment.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+	args.push_back(segment);
+
+	// Queries are case sensitive
+	// Do not convert arguments to lowercase
+	if (args[0] == "query")
+	{
+		while (std::getline(stream, segment, ' '))
+		{
+			args.push_back(segment);
+		}
+		return args;
+	}
+
 	while (std::getline(stream, segment, ' '))
 	{
 		// Convert strings to lowercase

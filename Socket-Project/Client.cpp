@@ -183,7 +183,8 @@ int main(int argc, char* argv[])
 
 			if (client->RequestQueryDHT(args))
 			{
-				printf("Connected to DHT successful\n");
+				printf("Connect to DHT successful\n");
+				printf("To query enter: query 'Long Name'\n");
 			}
 			else
 			{
@@ -584,14 +585,12 @@ bool Client::RequestQueryDHT(std::vector<std::string> args)
 
 	rightPeer.uname = args[i++];
 	rightPeer.IPAddr = args[i++];
-	rightPeer.leftPort = stoi(args[i++]);
-	rightPeer.rightPort = stoi(args[i++]);
 	rightPeer.queryPort = stoi(args[i++]);
 
-	int tempPort = rightPeer.leftPort;
+	// Queries are treated like right peers where the "left port"
+	// is the query port
 	rightPeer.leftPort = rightPeer.queryPort;
 	UpdateRightSocket(rightPeer);
-	rightPeer.leftPort = tempPort;
 
 	return true;
 }
