@@ -487,7 +487,6 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	std::string command = args[0];
 	std::string username = args[1];
 	int peerIndex;
-	Peer peer;
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -497,13 +496,11 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
-	peer = peers[peerIndex];
-
 	// DHT complete
 	if (command == "dht-complete")
 	{
 		// Check if peer is leader
-		if (peer.uname != leader.uname)
+		if (peers[peerIndex].uname != leader.uname)
 		{
 			return "FAILURE";
 		}
@@ -517,43 +514,41 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	if (command == "dht-rebuilt")
 	{
 		std::string newLeaderUname = args[2];
-		Peer newLeader;
+		int newLeaderIndex;
 
 		// Check if peer is the one that asked to join/leave
-		if (peer.uname != cachedPeer.uname)
+		if (peers[peerIndex].uname != cachedPeer.uname)
 		{
 			return "FAILURE";
 		}
 
 		// Check if new leader is registered
-		peerIndex = GetPeerIndex(newLeaderUname);
+		newLeaderIndex = GetPeerIndex(newLeaderUname);
 
 		if (peerIndex == -1)
 		{
 			return "FAILURE";
 		}
 
-		newLeader = peers[peerIndex];
-
 		// Set peer as free/in DHT
-		if (peer.state == Free)
+		if (peers[peerIndex].state == Free)
 		{
-			peer.state = InDHT;
+			peers[peerIndex].state = InDHT;
 		}
 		else
 		{
-			peer.state = Free;
+			peers[peerIndex].state = Free;
 		}
 
 		// Set new peer as leader
-		if (newLeader.uname != leader.uname)
+		peers[newLeaderIndex].state = Leader;
+		if (peers[newLeaderIndex].uname != leader.uname)
 		{
-			if (leader.state != Free)
+			if (this->leader.state != Free)
 			{
-				leader.state = InDHT;
+				this->leader.state = InDHT;
 			}
-			newLeader.state = Leader;
-			leader = newLeader;
+			this->leader = peers[newLeaderIndex];
 		}
 
 		// Mark DHT as running
@@ -566,17 +561,17 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	if (command == "teardown-complete")
 	{
 		// Check if peer is leader of DHT
-		if (peer.uname != leader.uname)
+		if (peers[peerIndex].uname != leader.uname)
 		{
 			return "FAILURE";
 		}
 
 		// Set all peers to free
-		for (Peer peer : peers)
+		for (int i = 0; i < peers.size(); i++)
 		{
-			if (peer.state != Free)
+			if (peers[peerIndex].state != Free)
 			{
-				peer.state = Free;
+				peers[peerIndex].state = Free;
 			}
 		}
 
