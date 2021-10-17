@@ -248,7 +248,7 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	int nodeCount = stoi(args[1]);
 	std::string username = args[2];
 	int peerIndex;
-	Peer* leader;
+	//Peer* leader;
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -277,18 +277,21 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	}
 
 	// Set peer to leader
-	leader = &peers[peerIndex];
-	leader->state = Leader;
-	this->leader = leader;
+	//leader = &peers[peerIndex];
+	//leader->state = Leader;
+	//this->leader = leader;
+
+	this->leader = peers[peerIndex];
+	this->leader.state = Leader;
 
 	// Begin building return message
 	args.clear();
 	args.push_back("SUCCESS");
-	args.push_back(leader->uname);
-	args.push_back(leader->IPAddr);
-	args.push_back(std::to_string(leader->leftPort));
-	args.push_back(std::to_string(leader->rightPort));
-	args.push_back(std::to_string(leader->queryPort));
+	args.push_back(this->leader.uname);
+	args.push_back(this->leader.IPAddr);
+	args.push_back(std::to_string(this->leader.leftPort));
+	args.push_back(std::to_string(this->leader.rightPort));
+	args.push_back(std::to_string(this->leader.queryPort));
 
 	// Select random nodes to be in DHT
 	srand(time(NULL));
@@ -299,7 +302,7 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	{
 		randInt = rand() % peers.size();
 
-		if (peers[randInt].uname == leader->uname || peers[randInt].state == InDHT)
+		if (peers[randInt].uname == this->leader.uname || peers[randInt].state == InDHT)
 		{
 			continue;
 		}
@@ -334,7 +337,7 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 {
 	std::string username = args[1];
 	int peerIndex;
-	Peer* peer;
+	Peer peer;
 
 #ifdef DEBUG
 	printf("SRTD1: %s\n", args[1].c_str());
@@ -352,7 +355,7 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
-	peer = &peers[peerIndex];
+	peer = peers[peerIndex];
 
 #ifdef DEBUG
 	printf("SRTD2: %d\n", dhtStatus);
@@ -366,12 +369,12 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 
 #ifdef DEBUG
 	int j = 0;
-	if (peer != leader) { j = 1; }
+	if (peer.uname != leader.uname) { j = 1; }
 	printf("SRTD3: %d\n", j);
 #endif // CJDEBUG
 
 	// Check if peer is leader of DHT
-	if (peer != leader)
+	if (peer.uname != leader.uname)
 	{
 		return "FAILURE";
 	}
@@ -386,7 +389,7 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 {
 	std::string username = args[1];
 	int peerIndex;
-	Peer* peer;
+	Peer peer;
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -396,7 +399,7 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
-	peer = &peers[peerIndex];
+	peer = peers[peerIndex];
 
 	// Check if DHT exists
 	if (dhtStatus != Running)
@@ -405,7 +408,7 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 	}
 
 	// Check if peer is in DHT
-	if (peer->state != Free)
+	if (peer.state != Free)
 	{
 		return "FAILURE";
 	}
@@ -422,11 +425,11 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 	// Reply with leader's info
 	args.clear();
 	args.push_back("SUCCESS");
-	args.push_back(leader->uname);
-	args.push_back(leader->IPAddr);
-	args.push_back(std::to_string(leader->leftPort));
-	args.push_back(std::to_string(leader->rightPort));
-	args.push_back(std::to_string(leader->queryPort));
+	args.push_back(this->leader.uname);
+	args.push_back(this->leader.IPAddr);
+	args.push_back(std::to_string(this->leader.leftPort));
+	args.push_back(std::to_string(this->leader.rightPort));
+	args.push_back(std::to_string(this->leader.queryPort));
 
 	std::string returnMessage;
 	returnMessage = FormatMessage(args);
@@ -437,7 +440,7 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 {
 	std::string username = args[1];
 	int peerIndex;
-	Peer* peer;
+	Peer peer;
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -453,7 +456,7 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
-	peer = &peers[peerIndex];
+	peer = peers[peerIndex];
 
 	// Check if DHT exists
 	if (dhtStatus != Running)
@@ -462,7 +465,7 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 	}
 
 	// Check if peer is in DHT
-	if (peer->state == Free)
+	if (peer.state == Free)
 	{
 		return "FAILURE";
 	}
@@ -484,7 +487,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	std::string command = args[0];
 	std::string username = args[1];
 	int peerIndex;
-	Peer* peer;
+	Peer peer;
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -494,13 +497,13 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
-	peer = &peers[peerIndex];
+	peer = peers[peerIndex];
 
 	// DHT complete
 	if (command == "dht-complete")
 	{
 		// Check if peer is leader
-		if (peer != leader)
+		if (peer.uname != leader.uname)
 		{
 			return "FAILURE";
 		}
@@ -514,10 +517,10 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	if (command == "dht-rebuilt")
 	{
 		std::string newLeaderUname = args[2];
-		Peer* newLeader;
+		Peer newLeader;
 
 		// Check if peer is the one that asked to join/leave
-		if (peer != cachedPeer)
+		if (peer.uname != cachedPeer.uname)
 		{
 			return "FAILURE";
 		}
@@ -530,26 +533,26 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 			return "FAILURE";
 		}
 
-		newLeader = &peers[peerIndex];
+		newLeader = peers[peerIndex];
 
 		// Set peer as free/in DHT
-		if (peer->state == Free)
+		if (peer.state == Free)
 		{
-			peer->state = InDHT;
+			peer.state = InDHT;
 		}
 		else
 		{
-			peer->state = Free;
+			peer.state = Free;
 		}
 
 		// Set new peer as leader
-		if (newLeader != leader)
+		if (newLeader.uname != leader.uname)
 		{
-			if (leader->state != Free)
+			if (leader.state != Free)
 			{
-				leader->state = InDHT;
+				leader.state = InDHT;
 			}
-			newLeader->state = Leader;
+			newLeader.state = Leader;
 			leader = newLeader;
 		}
 
@@ -563,7 +566,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 	if (command == "teardown-complete")
 	{
 		// Check if peer is leader of DHT
-		if (peer != leader)
+		if (peer.uname != leader.uname)
 		{
 			return "FAILURE";
 		}

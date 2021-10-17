@@ -20,8 +20,10 @@ private:
 	std::vector<std::thread> threads;
 
 	// Peer/DHT variables
-	Peer* leader;
-	Peer* cachedPeer;
+	//Peer* leader;
+	Peer leader;
+	Peer cachedPeer;
+
 	std::vector<Peer> peers;
 	DHTStatus dhtStatus = None;
 	int dhtRingSize = 0;
