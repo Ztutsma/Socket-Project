@@ -72,6 +72,7 @@ void Server::StartServer()
 void Server::ListenToPort()
 {
 	message.addrLen = sizeof(message.address);
+	std::string response;
 
 	// Loop infinitely
 	while (true)
@@ -84,8 +85,10 @@ void Server::ListenToPort()
 
 		printf("\n%s\n", message.inMsg.c_str());
 
+		response = HandleMessage(message.inMsg);
+
 		// Handle message
-		message.outMsg = const_cast<char*>(HandleMessage(message.inMsg).c_str());
+		message.outMsg = const_cast<char*>(response.c_str());
 
 		// Reply to client
 		sendto(serverSocket.socket, message.outMsg, strlen(message.outMsg), 0, (struct sockaddr*)&message.address, sizeof(message.address));
@@ -304,11 +307,15 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 		peersInDHT++;
 	}
 
+	// Set DHT Ring Size
+	dhtRingSize = nodeCount;
+
 	// Set DHT status as being built
 	dhtStatus = Building;
 
 	// Format message
-	std::string returnMessage = FormatMessage(args);
+	std::string returnMessage;
+	returnMessage = FormatMessage(args);
 
 	// Return message containing tuples of nodes in DHT
 	return returnMessage;
@@ -376,6 +383,9 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	// Increase ring size by 1
+	dhtRingSize++;
+
 	// Save joining peer info
 	cachedPeer = peer;
 
@@ -391,7 +401,8 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 	args.push_back(std::to_string(leader->rightPort));
 	args.push_back(std::to_string(leader->queryPort));
 
-	std::string returnMessage = FormatMessage(args);
+	std::string returnMessage;
+	returnMessage = FormatMessage(args);
 	return returnMessage;
 }
 
@@ -409,6 +420,12 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	// Check if there is only one peer in DHT
+	if (dhtRingSize < 2)
+	{
+		return "FAILURE";
+	}
+
 	peer = &peers[peerIndex];
 
 	// Check if DHT exists
@@ -422,6 +439,9 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 	{
 		return "FAILURE";
 	}
+
+	// Decrease Ring Size
+	dhtRingSize--;
 
 	// Save leaving peer info
 	cachedPeer = peer;
@@ -583,7 +603,8 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 	args.push_back(tempPeer.IPAddr);
 	args.push_back(std::to_string(tempPeer.queryPort));
 
-	std::string returnMessage = FormatMessage(args);
+	std::string returnMessage;
+	returnMessage = FormatMessage(args);
 
 	// Return info
 	return returnMessage;

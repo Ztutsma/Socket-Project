@@ -24,6 +24,7 @@ private:
 	Peer* cachedPeer;
 	std::vector<Peer> peers;
 	DHTStatus dhtStatus = None;
+	int dhtRingSize = 0;
 	
 	void ListenToPort();
 
