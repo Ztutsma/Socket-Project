@@ -347,6 +347,11 @@ bool Client::RequestDeregister(std::vector<std::string> args)
 	self.rightPort = 0;
 	self.queryPort = 0;
 
+	// Close sockets
+	close(leftSocket.socket);
+	close(rightSocket.socket);
+	close(querySocket.socket);
+
 	return true;
 }
 
@@ -1215,15 +1220,15 @@ void Client::PrintDHTEntry(std::vector<std::string> args)
 {
 	int i = 1;
 
-	printf("\nCountry Code:\t%s", args[i++]);
-	printf("\nShort Name:\t\t%s", args[i++]);
-	printf("\nTable Name:\t\t%s", args[i++]);
-	printf("\nLong Name:\t\t%s", args[i++]);
-	printf("\nAlpha Code:\t\t%s", args[i++]);
-	printf("\nCurrency Unit:\t%s", args[i++]);
-	printf("\nRegion:\t\t\t%s", args[i++]);
-	printf("\nWB2 Code:\t\t%s", args[i++]);
-	printf("\nLast Census:\t%s\n", args[i++]);
+	printf("\nCountry Code:\t%s", args[i++].c_str());
+	printf("\nShort Name:\t\t%s", args[i++].c_str());
+	printf("\nTable Name:\t\t%s", args[i++].c_str());
+	printf("\nLong Name:\t\t%s", args[i++].c_str());
+	printf("\nAlpha Code:\t\t%s", args[i++].c_str());
+	printf("\nCurrency Unit:\t%s", args[i++].c_str());
+	printf("\nRegion:\t\t\t%s", args[i++].c_str());
+	printf("\nWB2 Code:\t\t%s", args[i++].c_str());
+	printf("\nLast Census:\t%s\n", args[i++].c_str());
 }
 
 std::vector<std::string> Client::SendMessageWResponse(Socket socket, std::string msg)

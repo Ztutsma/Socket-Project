@@ -27,18 +27,14 @@ int main(int argc, char* argv[])
 
 	// Begin user input loop
 	std::string userInput = "";
-	std::cin.clear();
-	//std::cin.ignore(10000, '\n');
 
-	while (!(strcasecmp(userInput.c_str(), "quit") == 0) && !(strcasecmp(userInput.c_str(), "exit") == 0))
+	while (userInput != "quit" && userInput != "exit")
 	{
 		// Loop until user enters "quit" or "exit"
-		std::cin >> userInput;
+		std::getline(std::cin, userInput);
 
 		// Remove leading whitespace
 		userInput = userInput.substr(userInput.find_first_not_of(" \n\t\r\f\v"));
-
-		std::cin.clear();
 	}
 
 	return 0;
