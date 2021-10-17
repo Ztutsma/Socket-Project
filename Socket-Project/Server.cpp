@@ -1,5 +1,7 @@
 #include "Server.h"
 
+#define DEBUG
+
 void DieWithError(const char* errorMessage) // External error handling function
 {
 	perror(errorMessage);
@@ -83,9 +85,15 @@ void Server::ListenToPort()
 		message.buffer[message.msgSize] = '\0';
 		message.inMsg = std::string(message.buffer);
 
+#ifdef DEBUG
 		printf("\n%s\n", message.inMsg.c_str());
+#endif // DEBUG
 
 		response = HandleMessage(message.inMsg);
+
+#ifdef DEBUG
+		printf("\n%s\n", response.c_str());
+#endif // DEBUG
 
 		// Handle message
 		message.outMsg = const_cast<char*>(response.c_str());
@@ -99,15 +107,21 @@ std::string Server::HandleMessage(std::string msg)
 {
 	std::string response;
 
+	// Parse message into list of arguments
+	std::vector <std::string> args = ParseMessage(msg);
+
+	// Update DHT Status to allow other commands through
+	if (args[0] == "dht-complete" || args[0] == "dht-rebuilt" || args[0] == "teardown-complete")
+	{
+		response = UpdateDHTStatus(args);
+	}
+
 	// Check if server is accepting messages
 	// Proceed if dht is not being built, rebuilt, or torn down
 	if (dhtStatus == Building || dhtStatus == Rebuilding || dhtStatus == Teardown)
 	{
 		return "FAILURE";
 	}
-
-	// Parse message into list of arguments
-	std::vector <std::string> args = ParseMessage(msg);
 
 	// Switch based on first argument
 	if (args[0] == "register")
@@ -143,11 +157,6 @@ std::string Server::HandleMessage(std::string msg)
 	if (args[0] == "query-dht")
 	{
 		response = HandleDHTQuery(args);
-	}
-
-	if (args[0] == "dht-complete" || args[0] == "dht-rebuilt" || args[0] == "teardown-complete")
-	{
-		response = UpdateDHTStatus(args);
 	}
 
 	// Return response
@@ -327,8 +336,16 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 	int peerIndex;
 	Peer* peer;
 
+#ifdef DEBUG
+	printf("SRTD1: %s\n", args[1].c_str());
+#endif // CJDEBUG
+
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
+
+#ifdef DEBUG
+	printf("SRTD2: %d\n", peerIndex);
+#endif // CJDEBUG
 
 	if (peerIndex == -1)
 	{
@@ -337,11 +354,21 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 
 	peer = &peers[peerIndex];
 
+#ifdef DEBUG
+	printf("SRTD2: %d\n", dhtStatus);
+#endif // CJDEBUG
+
 	// Check if DHT exists
 	if (dhtStatus != Running)
 	{
 		return "FAILURE";
 	}
+
+#ifdef DEBUG
+	int j = 0;
+	if (peer != leader) { j = 1; }
+	printf("SRTD3: %d\n", j);
+#endif // CJDEBUG
 
 	// Check if peer is leader of DHT
 	if (peer != leader)
