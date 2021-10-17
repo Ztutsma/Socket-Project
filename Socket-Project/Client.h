@@ -44,8 +44,10 @@ private:
 
 	// Thread Variables
 	std::vector<std::thread> threads;
-	bool leftDht;
-	bool joinedDht;
+	bool leftDht = false;
+	bool joinedDht = false;
+	bool killDHT = false;
+	bool dhtDead = false;
 
 	// DHT Variables
 	std::vector<Peer> dhtPeers;

@@ -448,8 +448,49 @@ bool Client::RequestRebuildDHT()
 
 bool Client::RequestDHTTearddown(std::vector<std::string> args)
 {
+	// Message server
+	args = SendMessageWResponse(serverSocket, args);
 
+	// Check if successful
+	if (args[0] != "SUCCESS")
+	{
+		return false;
+	}
 
+	// Note dht is being torndown w/o rebuild
+	dhtStatus = Teardown;
+	killDHT = true;
+
+	// Begin DHT Teardown
+	
+	// Send teardown to right peer
+	args.clear();
+	args.push_back("teardown");
+
+	SendMessageNoResponse(rightSocket, args);
+
+	// Lock thread until ExitDHT() steps have been completed
+	dhtDead = false;
+	while (!dhtDead);
+	// Thread is unlocked by ExitDHT()
+
+	// Reset Locks
+	dhtDead = false; 
+	killDHT = false;
+
+	// Tell server dht is torn down
+	args.clear();
+	args.push_back("teardown-complete");
+	args.push_back(self.uname);
+
+	args = SendMessageWResponse(serverSocket, args);
+
+	if (args[0] != "SUCCESS")
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool Client::RequestQueryDHT(std::vector<std::string> args)
@@ -744,8 +785,6 @@ void Client::BuildDHT()
 
 		StoreDHTEntry(args);
 	}
-
-	dhtStatus = Running;
 }
 
 void Client::JoinDHT()
@@ -850,6 +889,14 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 	// Check if self requested teardown
 	if (dhtStatus == Teardown)
 	{
+		// Check if dht is being completely torn down
+		if (killDHT)
+		{
+			dhtDead = true;
+
+			return;
+		}
+
 		// Check if self is leaving DHT
 		if (self.dhtID == -1)
 		{
@@ -863,6 +910,10 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 			args.push_back(std::to_string(dhtRingSize));
 
 			SendMessageNoResponse(rightSocket, args);
+
+			dhtStatus = None;
+
+			return;
 		}
 
 		// If self is not leaving, new Peer has joined
@@ -879,6 +930,10 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 		args.push_back(std::to_string(leftPeer.queryPort));
 
 		RespondToMessage(message, args);
+
+		dhtStatus = None;
+
+		return;
 	}
 }
 
