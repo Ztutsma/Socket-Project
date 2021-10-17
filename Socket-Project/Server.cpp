@@ -277,12 +277,8 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	}
 
 	// Set peer to leader
-	//leader = &peers[peerIndex];
-	//leader->state = Leader;
-	//this->leader = leader;
-
+	peers[peerIndex].state = Leader;
 	this->leader = peers[peerIndex];
-	this->leader.state = Leader;
 
 	// Begin building return message
 	args.clear();
