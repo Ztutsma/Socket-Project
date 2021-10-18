@@ -49,6 +49,7 @@ std::vector<std::string> ParseUInput(std::string input)
 	return args;
 }
 
+// Converts all arguments of a "query" into one space-separated string
 std::vector<std::string> FormatQuery(std::vector<std::string> args)
 {
 	std::string command = args[0];
