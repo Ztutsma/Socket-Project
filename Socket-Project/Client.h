@@ -16,15 +16,13 @@ public:
 
 	bool RequestDeregister(std::vector<std::string> args);
 
-	bool RequestDHTSetup(std::vector<std::string> args);
+	bool RequestSetupDHT(std::vector<std::string> args);
 
 	bool RequestJoinDHT(std::vector<std::string> args);
 
 	bool RequestLeaveDHT(std::vector<std::string> args);
 
-	bool RequestRebuildDHT();
-
-	bool RequestDHTTearddown(std::vector<std::string> args);
+	bool RequestTearddownDHT(std::vector<std::string> args);
 
 	bool RequestQueryDHT(std::vector<std::string> args);
 
@@ -70,6 +68,7 @@ private:
 	};
 	std::vector<HashNode*> hashTable;
 
+	// Private Methods
 	void StartClient();
 
 	void BuildLeftSocket();
@@ -90,21 +89,9 @@ private:
 
 	void BuildDHT();
 
-	void JoinDHT();
-
-	void ExitDHT();
-
-	void AddDHTPeer(std::vector<std::string> args);
-
-	void TeardownDHT(Message message, std::vector<std::string> args);
-
 	void RebuildDHT(Message message, std::vector<std::string> args);
 
-	void ResetDHTID(std::vector<std::string> args);
-
-	void SetDHTPeerInfo(std::vector<std::string> args);
-
-	void ResetDHTPeerInfo(std::vector<std::string> args);
+	void TeardownDHT(Message message, std::vector<std::string> args);
 
 	void StoreDHTEntry(std::vector<std::string> args);
 
@@ -113,6 +100,18 @@ private:
 	void ReturnDHTEntry(Message message, std::vector<std::string> args);
 
 	void PrintDHTEntry(std::vector<std::string> args);
+
+	void AddDHTPeer(std::vector<std::string> args);
+
+	void FinishJoinDHT();
+
+	void FinishLeaveDHT();
+
+	void ResetDHTID(std::vector<std::string> args);
+
+	void SetDHTPeerInfo(std::vector<std::string> args);
+
+	void ResetDHTPeerInfo(std::vector<std::string> args);
 
 	std::vector<std::string> SendMessageWResponse(Socket socket, std::string msg);
 
