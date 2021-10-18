@@ -560,6 +560,9 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 
 		return "SUCCESS";
 	}
+
+	// Something Unexpected Happened
+	return "FAILURE";
 }
 
 std::string Server::HandleDHTQuery(std::vector <std::string> args)
