@@ -427,6 +427,7 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 
 	// Save joining peer info
 	cachedPeer = peer;
+	cachedPeer.dhtID = -1;
 
 	// Set DHT status as being rebuilt
 	dhtStatus = Rebuilding;
@@ -489,6 +490,7 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 
 	// Save leaving peer info
 	cachedPeer = peer;
+	cachedPeer.dhtID = -2;
 
 	// Set DHT status as being rebuilt
 	dhtStatus = Rebuilding;
@@ -549,7 +551,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		}
 
 		// Set peer as free/in DHT
-		if (peers[peerIndex].state == Free)
+		if (cachedPeer.dhtID == -1)
 		{
 			peers[peerIndex].state = InDHT;
 		}
