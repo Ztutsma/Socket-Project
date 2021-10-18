@@ -20,7 +20,6 @@ private:
 	std::vector<std::thread> threads;
 
 	// Peer/DHT variables
-	//Peer* leader;
 	Peer leader;
 	Peer cachedPeer;
 

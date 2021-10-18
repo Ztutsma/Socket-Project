@@ -1,7 +1,5 @@
 #include "Server.h"
 
-#define DEBUG
-
 void DieWithError(const char* errorMessage) // External error handling function
 {
 	perror(errorMessage);
@@ -65,6 +63,7 @@ Server::~Server()
 
 }
 
+// Begins thread that listens to Socket
 void Server::StartServer()
 {
 	// Run threads
@@ -85,15 +84,7 @@ void Server::ListenToPort()
 		message.buffer[message.msgSize] = '\0';
 		message.inMsg = std::string(message.buffer);
 
-#ifdef DEBUG
-		printf("\n%s\n", message.inMsg.c_str());
-#endif // DEBUG
-
 		response = HandleMessage(message.inMsg);
-
-#ifdef DEBUG
-		printf("\n%s\n", response.c_str());
-#endif // DEBUG
 
 		// Handle message
 		message.outMsg = const_cast<char*>(response.c_str());
@@ -103,6 +94,9 @@ void Server::ListenToPort()
 	}
 }
 
+// Parses the message received into a list of arguments
+// then calls the method that corresponds to the first argument
+//
 std::string Server::HandleMessage(std::string msg)
 {
 	std::string response;
@@ -248,7 +242,6 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	int nodeCount = stoi(args[1]);
 	std::string username = args[2];
 	int peerIndex;
-	//Peer* leader;
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -335,16 +328,8 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 	int peerIndex;
 	Peer peer;
 
-#ifdef DEBUG
-	printf("SRTD1: %s\n", args[1].c_str());
-#endif // CJDEBUG
-
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
-
-#ifdef DEBUG
-	printf("SRTD2: %d\n", peerIndex);
-#endif // CJDEBUG
 
 	if (peerIndex == -1)
 	{
@@ -353,21 +338,11 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 
 	peer = peers[peerIndex];
 
-#ifdef DEBUG
-	printf("SRTD2: %d\n", dhtStatus);
-#endif // CJDEBUG
-
 	// Check if DHT exists
 	if (dhtStatus != Running)
 	{
 		return "FAILURE";
 	}
-
-#ifdef DEBUG
-	int j = 0;
-	if (peer.uname != leader.uname) { j = 1; }
-	printf("SRTD3: %d\n", j);
-#endif // CJDEBUG
 
 	// Check if peer is leader of DHT
 	if (peer.uname != leader.uname)
@@ -582,7 +557,7 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 {
 	std::string username = args[1];
 	int peerIndex;
-	Peer* peer;
+	Peer peer;
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -592,7 +567,7 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
-	peer = &peers[peerIndex];
+	peer = peers[peerIndex];
 
 	// Check if DHT exists
 	if (dhtStatus != Running)
@@ -601,7 +576,7 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 	}
 
 	// Check if peer is in DHT
-	if (peer->state != Free)
+	if (peer.state != Free)
 	{
 		return "FAILURE";
 	}
