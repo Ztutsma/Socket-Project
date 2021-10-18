@@ -174,6 +174,7 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 	std::string rightPort = args[4];
 	std::string queryPort = args[5];
 
+	printf("\nRequest to register received from %s\n", username.c_str());
 
 	if (peers.size() != 0)
 	{
@@ -215,6 +216,8 @@ std::string Server::RegisterPeer(std::vector <std::string> args)
 
 	peers.push_back(newPeer);
 
+	printf("\nRequest to register approved\n");
+
 	return "SUCCESS";
 }
 
@@ -222,7 +225,9 @@ std::string Server::DeregisterPeer(std::vector <std::string> args)
 {
 	std::string username = args[1];
 	int peerIndex;
-	Peer* peer;
+	Peer peer;
+
+	printf("\nRequest to deregister received from %s\n", username.c_str());
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -232,16 +237,20 @@ std::string Server::DeregisterPeer(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
-	peer = &peers[peerIndex];
+	peer = peers[peerIndex];
 
 	// Check if peer is in DHT
-	if (peer->state != Free)
+	if (peer.state != Free)
 	{
 		return "FAILURE";
 	}
 
+	printf("Request to deregister approved\n");
+
 	// Remove from list of registered peers
 	peers.erase(peers.begin() + peerIndex);
+
+	printf("%s removed from list of known peers.\n", username.c_str());
 
 	return "SUCCESS";
 }
@@ -251,6 +260,8 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 	int nodeCount = stoi(args[1]);
 	std::string username = args[2];
 	int peerIndex;
+
+	printf("\nRequest to setup DHT received from %s\n", username.c_str());
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -278,9 +289,13 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	printf("Request to setup DHT approved\n");
+
 	// Set peer to leader
 	peers[peerIndex].state = Leader;
 	this->leader = peers[peerIndex];
+
+	printf("Leader of DHT: %s\n", this->leader.uname.c_str());
 
 	// Begin building return message
 	args.clear();
@@ -314,6 +329,8 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 		args.push_back(std::to_string(peers[randInt].rightPort));
 		args.push_back(std::to_string(peers[randInt].queryPort));
 
+		printf("Peer chosen for DHT: %s\n", peers[randInt].uname.c_str());
+
 		peersInDHT++;
 	}
 
@@ -322,6 +339,8 @@ std::string Server::StartDHTSetup(std::vector <std::string> args)
 
 	// Set DHT status as being built
 	dhtStatus = Building;
+
+	printf("DHT is now: Building\n");
 
 	// Format message
 	std::string returnMessage;
@@ -336,6 +355,8 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 	std::string username = args[1];
 	int peerIndex;
 	Peer peer;
+
+	printf("\nRequest to teardown DHT received from %s\n", username.c_str());
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -359,8 +380,12 @@ std::string Server::StartDHTTeardown(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	printf("Request to setup DHT approved\n");
+
 	// Set DHT states as being torn down
 	dhtStatus = Teardown;
+
+	printf("DHT is now: Tearing Down\n");
 
 	return "SUCCESS";
 }
@@ -370,6 +395,8 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 	std::string username = args[1];
 	int peerIndex;
 	Peer peer;
+
+	printf("\nRequest to join DHT received from %s\n", username.c_str());
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -393,6 +420,8 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	printf("Request to join DHT approved\n");
+
 	// Increase ring size by 1
 	dhtRingSize++;
 
@@ -401,6 +430,7 @@ std::string Server::AddDHTPeer(std::vector <std::string> args)
 
 	// Set DHT status as being rebuilt
 	dhtStatus = Rebuilding;
+	printf("DHT is now: Rebuilding\n");
 
 	// Reply with leader's info
 	args.clear();
@@ -421,6 +451,8 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 	std::string username = args[1];
 	int peerIndex;
 	Peer peer;
+
+	printf("\nRequest to leave DHT received from %s\n", username.c_str());
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -450,6 +482,8 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	printf("Request to leave DHT approved\n");
+
 	// Decrease Ring Size
 	dhtRingSize--;
 
@@ -458,6 +492,7 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 
 	// Set DHT status as being rebuilt
 	dhtStatus = Rebuilding;
+	printf("DHT is now: Rebuilding\n");
 
 	return "SUCCESS";
 }
@@ -476,6 +511,8 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	printf("Updating DHT Status with... %s\n", command.c_str());
+
 	// DHT complete
 	if (command == "dht-complete")
 	{
@@ -486,6 +523,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		}
 		// Mark DHT as running
 		dhtStatus = Running;
+		printf("DHT is now: Running\n");
 
 		return "SUCCESS";
 	}
@@ -533,6 +571,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 
 		// Mark DHT as running
 		dhtStatus = Running;
+		printf("DHT is now: Running\n");
 
 		return "SUCCESS";
 	}
@@ -557,6 +596,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 
 		// Mark DHT as not existing
 		dhtStatus = None;
+		printf("DHT is now: Torn Down\n");
 
 		return "SUCCESS";
 	}
@@ -570,6 +610,8 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 	std::string username = args[1];
 	int peerIndex;
 	Peer peer;
+
+	printf("\nRequest to query DHT received from %s\n", username.c_str());
 
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
@@ -593,6 +635,8 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 		return "FAILURE";
 	}
 
+	printf("Request to query DHT approved\n");
+
 	// Select random peer in DHT
 	srand(time(NULL));
 	int randInt = rand() % peers.size();
@@ -610,6 +654,10 @@ std::string Server::HandleDHTQuery(std::vector <std::string> args)
 	args.push_back(tempPeer.uname);
 	args.push_back(tempPeer.IPAddr);
 	args.push_back(std::to_string(tempPeer.queryPort));
+
+	printf("Providing peer from DHT to %s\n", username.c_str());
+	printf("Name: %s   IP Address: %s   Port: %s\n", 
+		tempPeer.uname.c_str(), tempPeer.IPAddr.c_str(), std::to_string(tempPeer.queryPort).c_str());
 
 	std::string returnMessage;
 	returnMessage = FormatMessage(args);

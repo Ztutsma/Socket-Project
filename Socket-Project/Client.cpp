@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 
 	while (userInput != "quit" && userInput != "exit")
 	{
-		std::cout << "IN >> ";
+		std::cout << "\nIN >> ";
 		std::getline(std::cin, userInput);
 
 		// Remove leading whitespace
@@ -184,7 +184,6 @@ int main(int argc, char* argv[])
 
 			if (client->RequestQueryDHT(args))
 			{
-				printf("Connect to DHT successful\n");
 				printf("To query enter: query 'Long Name'\n");
 			}
 			else
@@ -326,6 +325,15 @@ bool Client::RequestRegister(std::vector<std::string> args)
 		args[5] = std::to_string(queryPort);
 	}
 
+
+	int i = 1;
+	printf("\nRequesting to Register with server:\n");
+	printf("Name: %s\n", args[i++].c_str());
+	printf("IP Address: %s\n", args[i++].c_str());
+	printf("Left Port: %s\n", args[i++].c_str());
+	printf("Right Port: %s\n", args[i++].c_str());
+	printf("Query Port: %s\n", args[i++].c_str());
+
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
 
@@ -352,6 +360,9 @@ bool Client::RequestRegister(std::vector<std::string> args)
 //
 bool Client::RequestDeregister(std::vector<std::string> args)
 {
+	printf("\nRequesting to Deregister with server:\n");
+	printf("Name: %s\n", args[1].c_str());
+
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
 
@@ -380,6 +391,10 @@ bool Client::RequestDeregister(std::vector<std::string> args)
 //
 bool Client::RequestSetupDHT(std::vector<std::string> args)
 {
+	printf("\nRequesting to Setup DHT with server:\n");
+	printf("Name: %s\n", args[2].c_str());
+	printf("Requested Node Count: %s\n", args[1].c_str());
+	
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
 
@@ -389,13 +404,20 @@ bool Client::RequestSetupDHT(std::vector<std::string> args)
 		return false;
 	}
 
+	printf("Approval to Setup DHT recieved\n");
+
 	// Build DHT Network
 	BuildDHTNetwork(args);
 
 	// Build DHT
+	printf("\nBuilding DHT... ");
 	BuildDHT();
 
 	// Tell Server DHT is complete
+
+	printf("Telling server Setup DHT is complete\n");
+	printf("Name: %s\n", self.uname.c_str());
+
 	args.clear();
 	args.push_back("dht-complete");
 	args.push_back(self.uname);
@@ -413,8 +435,13 @@ bool Client::RequestSetupDHT(std::vector<std::string> args)
 // 
 bool Client::RequestJoinDHT(std::vector<std::string> args)
 {
+	printf("\nRequesting to Join DHT with server:\n");
+	printf("Name: %s\n", args[1].c_str());
+
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
+
+	printf("Approval to Join DHT recieved\n");
 
 	// Check if successful
 	if (args[0] != "SUCCESS")
@@ -426,6 +453,9 @@ bool Client::RequestJoinDHT(std::vector<std::string> args)
 	self.dhtID = -1;
 
 	// Set Leader as Right peer
+
+	printf("Setting DHT Leader as my right peer\n");
+
 	int i = 1;
 
 	rightPeer.uname = args[i++];
@@ -438,7 +468,12 @@ bool Client::RequestJoinDHT(std::vector<std::string> args)
 
 	// Begin Join DHT Process
 
+	printf("\nBeginning Join DHT Procedure\n");
+
 	// Tell leader to add DHT peer
+
+	printf("Telling Leader to add a new peer to DHT\n");
+
 	args.clear();
 	args.push_back("add-peer");
 	args.push_back(self.uname);
@@ -451,11 +486,14 @@ bool Client::RequestJoinDHT(std::vector<std::string> args)
 
 	// Lock thread until FinishJoinDHT() steps have been completed
 	joinedDht = false;
-	while (!joinedDht);
-	// Thread is unlocked by FinishJoinDHT()
+	while (!joinedDht); // Thread is unlocked by FinishJoinDHT()
 	joinedDht = false; // Reset Lock
 
 	// Tell server dht is rebuilt
+
+	printf("Telling server the DHT has been rebuilt\n");
+	printf("Name: %s\t\tLeader: %s\n", self.uname.c_str(), rightPeer.uname.c_str());
+
 	args.clear();
 	args.push_back("dht-rebuilt");
 	args.push_back(self.uname);
@@ -475,6 +513,9 @@ bool Client::RequestJoinDHT(std::vector<std::string> args)
 // 
 bool Client::RequestLeaveDHT(std::vector<std::string> args)
 {
+	printf("\nRequesting to Leave DHT with server:\n");
+	printf("Name: %s\n", args[1].c_str());
+
 	args = SendMessageWResponse(serverSocket, args);
 
 	// Check if successful
@@ -482,6 +523,8 @@ bool Client::RequestLeaveDHT(std::vector<std::string> args)
 	{
 		return false;
 	}
+
+	printf("Approval to Leave DHT recieved\n");
 
 	// Set ID to -1 to note node is leaving
 	self.dhtID = -1;
@@ -491,7 +534,11 @@ bool Client::RequestLeaveDHT(std::vector<std::string> args)
 
 	// Begin Exit DHT Process
 
+	printf("\nBeginning Leave DHT Procedure\n");
+
 	// Send teardown to right peer
+	printf("Telling right peer to tear down DHT\n");
+
 	args.clear();
 	args.push_back("teardown");
 
@@ -504,6 +551,10 @@ bool Client::RequestLeaveDHT(std::vector<std::string> args)
 	leftDht = false; // Reset Lock
 
 	// Tell server dht is rebuilt
+	
+	printf("Telling server the DHT has been rebuilt\n");
+	printf("Name: %s\t\tNew Leader: %s\n", self.uname.c_str(), rightPeer.uname.c_str());
+
 	args.clear();
 	args.push_back("dht-rebuilt");
 	args.push_back(self.uname);
@@ -523,8 +574,13 @@ bool Client::RequestLeaveDHT(std::vector<std::string> args)
 //
 bool Client::RequestTearddownDHT(std::vector<std::string> args)
 {
+	printf("\nRequesting to Teardown DHT with server:\n");
+	printf("Name: %s\n", args[1].c_str());
+
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
+
+	printf("Approval to Teardown DHT recieved\n");
 
 	// Check if successful
 	if (args[0] != "SUCCESS")
@@ -538,7 +594,11 @@ bool Client::RequestTearddownDHT(std::vector<std::string> args)
 
 	// Begin DHT Teardown
 	
+	printf("\nBeginning Teardown DHT Procedure\n");
+
 	// Send teardown to right peer
+	printf("Telling right peer to tear down DHT\n");
+
 	args.clear();
 	args.push_back("teardown");
 
@@ -554,6 +614,9 @@ bool Client::RequestTearddownDHT(std::vector<std::string> args)
 	killDHT = false;
 
 	// Tell server dht is torn down
+	printf("Telling server the DHT has been rebuilt\n");
+	printf("Name: %s\n", self.uname.c_str());
+
 	args.clear();
 	args.push_back("teardown-complete");
 	args.push_back(self.uname);
@@ -572,8 +635,13 @@ bool Client::RequestTearddownDHT(std::vector<std::string> args)
 //
 bool Client::RequestQueryDHT(std::vector<std::string> args)
 {
+	printf("\nRequesting to Query DHT with server:\n");
+	printf("Name: %s\n", args[1].c_str());
+
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
+
+	printf("Approval to Teardown DHT recieved\n");
 
 	// Check if successful
 	if (args[0] != "SUCCESS")
@@ -590,6 +658,11 @@ bool Client::RequestQueryDHT(std::vector<std::string> args)
 	rightPeer.uname = args[i++];
 	rightPeer.IPAddr = args[i++];
 	rightPeer.queryPort = stoi(args[i++]);
+
+	printf("Connected to: \n");
+	printf("Name: %s\n", rightPeer.uname.c_str());
+	printf("IP Address: %s\n", rightPeer.IPAddr.c_str());
+	printf("Port: %s\n", std::to_string(rightPeer.queryPort).c_str());
 
 	// Queries are treated like right peers where the "left port"
 	// is the query port
@@ -614,6 +687,9 @@ void Client::QueryDHT(std::vector<std::string> args)
 	// Format Message
 	args = FormatQuery(args);
 
+	printf("\nSending query to %s\n", rightPeer.uname.c_str());
+	printf("Long Name: %s\n", args[1].c_str());
+
 	// Message DHT member
 	args = SendMessageWResponse(rightSocket, args);
 
@@ -626,7 +702,6 @@ void Client::QueryDHT(std::vector<std::string> args)
 
 	// Print Response
 	PrintDHTEntry(args);
-
 }
 
 // Builds the sockets and starts threads that will listen to
@@ -793,6 +868,8 @@ void Client::HandleMessage(Message message)
 
 void Client::BuildDHTNetwork(std::vector<std::string> args)
 {
+	printf("Building DHT Ring...\n");
+
 	// Add peers to list of peers in dht
 	Peer peer;
 	for (int i = 1; i < args.size();)
@@ -833,6 +910,10 @@ void Client::BuildDHTNetwork(std::vector<std::string> args)
 		rightPeer = dhtPeers[i];
 		UpdateRightSocket(rightPeer);
 
+		printf("\nTelling %s to Set ID to %d\n", rightPeer.uname.c_str(),i);
+		printf("Left peer to: %s\n", dhtPeers[leftPeerIndex].uname.c_str());
+		printf("Right peer to: %s\n", dhtPeers[rightPeerIndex].uname.c_str());
+
 		// Send message to peer
 		SendMessageNoResponse(rightSocket, args);
 	}
@@ -847,8 +928,14 @@ void Client::BuildDHTNetwork(std::vector<std::string> args)
 	leftPeer = dhtPeers[leftPeerIndex];
 	rightPeer = dhtPeers[rightPeerIndex];
 
+	printf("\nSetting my ID to: %d\n", self.dhtID);
+	printf("Left peer to: %s\n", leftPeer.uname.c_str());
+	printf("Right peer to: %s\n", rightPeer.uname.c_str());
+
 	// Update right socket of leader to "permanent" right peer
 	UpdateRightSocket(rightPeer);
+
+	printf("\nFinished Building DHT Ring\n");
 }
 
 void Client::BuildDHT()
@@ -911,14 +998,20 @@ void Client::BuildDHT()
 	}
 
 	inputFile.close();
+
+	printf("Done!\n");
 }
 
 void Client::RebuildDHT(Message message, std::vector<std::string> args)
 {
+	printf("\nRebuilding DHT... ");
+
 	// Build DHT
 	BuildDHT();
 
 	// Reply that DHT is rebuilt
+	printf("Replying that DHT has been rebuilt... \n");
+
 	args.clear();
 	args.push_back("dht-rebuilt");
 
@@ -927,7 +1020,10 @@ void Client::RebuildDHT(Message message, std::vector<std::string> args)
 
 void Client::TeardownDHT(Message message, std::vector<std::string> args)
 {
+	printf("\nReceived Teardown Command\n");
+
 	// Tear down DHT
+	printf("Tearing down local DHT... ");
 	HashNode* tempNode;
 
 	for (int i = 0; i < hashTable.size(); i++)
@@ -939,6 +1035,8 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 			delete(tempNode);
 		}
 	}
+	printf("Done!\n");
+
 
 	// Check if self requested teardown
 	if (dhtStatus == Teardown)
@@ -946,10 +1044,10 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 		// Check if dht is being completely torn down
 		if (killDHT)
 		{
-			dhtDead = true;
+			printf("DHT has been Torn Down\n");
 
 			dhtStatus = None;
-
+			dhtDead = true;
 			return;
 		}
 
@@ -960,6 +1058,7 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 			dhtRingSize--;
 
 			// Tell right peer to reset id to 0
+			printf("Telling %s to Reset ID to 0\n", rightPeer.uname.c_str());
 			args.clear();
 			args.push_back("reset-id");
 			args.push_back(std::to_string(0));
@@ -977,6 +1076,9 @@ void Client::TeardownDHT(Message message, std::vector<std::string> args)
 		dhtRingSize++;
 
 		// Tell new peer to reset left to self's left
+		printf("Telling new peer, %s, to Reset Left to my left: %s\n", 
+			newPeer.uname.c_str(), leftPeer.uname.c_str());
+
 		args.clear();
 		args.push_back("reset-left");
 		args.push_back(leftPeer.uname);
@@ -1047,6 +1149,8 @@ void Client::StoreDHTEntry(std::vector<std::string> args)
 
 std::vector<std::string> Client::GetDHTEntry(std::string longName, int pos)
 {
+	printf("\nSearching my DHT (peer %d) for \"%s\" at position: %d\n",self.dhtID, longName.c_str(), pos);
+
 	std::vector<std::string> response;
 
 	HashNode* node = hashTable[pos];
@@ -1059,9 +1163,12 @@ std::vector<std::string> Client::GetDHTEntry(std::string longName, int pos)
 	// If node with longname wasnt found
 	if (node == NULL)
 	{
+		printf("\"%s\" not found\n", longName.c_str());
 		response.push_back("FAILURE");
 		return response;
 	}
+
+	printf("\"%s\" found\n", longName.c_str());
 
 	response.push_back("SUCCESS");
 	response.push_back(node->countryCode);
@@ -1084,8 +1191,9 @@ void Client::ReturnDHTEntry(Message message, std::vector<std::string> args)
 	std::string longName = args[1];
 
 	// If position and ID have not been calculated yet
-	if (args.size() == 2)
+	if (args.size() < 3)
 	{
+		pos = 0;
 		// Get hashed values from long name
 		for (char c : longName) {
 			pos += c;
@@ -1105,12 +1213,16 @@ void Client::ReturnDHTEntry(Message message, std::vector<std::string> args)
 	if (id == self.dhtID)
 	{
 		args = GetDHTEntry(longName, pos);
+		printf("\nReturning response to DHT Query\n");
 		RespondToMessage(message, args);
 		return;
 	}
 
 	// Else pass through to right peer
+	printf("\nI am not ID: %d\n", id);
 	args = SendMessageWResponse(rightSocket, args);
+
+	printf("\nReturning response to DHT Query\n");
 	RespondToMessage(message, args);
 }
 
@@ -1131,6 +1243,7 @@ void Client::PrintDHTEntry(std::vector<std::string> args)
 
 void Client::AddDHTPeer(std::vector<std::string> args)
 {
+	printf("\nCommand to Add New Peer received\n");
 	int i = 1;
 
 	// Save info of peer that is being added
@@ -1140,7 +1253,11 @@ void Client::AddDHTPeer(std::vector<std::string> args)
 	this->newPeer.rightPort = stoi(args[i++]);
 	this->newPeer.queryPort = stoi(args[i++]);
 
+	printf("Adding New Peer %s to DHT\n", newPeer.uname.c_str());
+
 	// begin dht teardown
+	printf("Beginning DHT Teardown...\n");
+
 	args.clear();
 	args.push_back("teardown");
 
@@ -1157,6 +1274,8 @@ void Client::FinishJoinDHT()
 	std::vector<std::string> args;
 
 	// Tell left peer to reset right
+	printf("Telling left peer, %s, to reset right to me\n", leftPeer.uname.c_str());
+
 	args.push_back("reset-right");
 	args.push_back(self.uname);
 	args.push_back(self.IPAddr);
@@ -1169,11 +1288,15 @@ void Client::FinishJoinDHT()
 	UpdateRightSocket(rightPeer);
 
 	// Tell right peer to reset left
+	printf("Telling right peer, %s, to reset left to me\n", rightPeer.uname.c_str());
+
 	args[0] = "reset-left";
 	
 	SendMessageNoResponse(rightSocket, args);
 	
 	// Tell right peer to reset IDs
+	printf("Telling right peer to Reset DHT IDs\n");
+
 	args.clear();
 	args.push_back("reset-id");
 	args.push_back("0");
@@ -1181,6 +1304,7 @@ void Client::FinishJoinDHT()
 	SendMessageNoResponse(rightSocket, args);
 
 	// Tell right peer to rebuild dht
+	printf("Telling right peer to Rebuild DHT\n");
 	args.clear();
 	args.push_back("rebuild-dht");
 
@@ -1198,29 +1322,34 @@ void Client::FinishLeaveDHT()
 	std::vector<std::string> args;
 
 	// Tell left peer to reset right
+	printf("Telling left peer, %s, to reset right to %s\n", leftPeer.uname.c_str(), rightPeer.uname.c_str());
+
 	args.push_back("reset-right");
-	args.push_back(rightPeer.uname);
-	args.push_back(rightPeer.IPAddr);
-	args.push_back(std::to_string(rightPeer.leftPort));
-	args.push_back(std::to_string(rightPeer.rightPort));
-	args.push_back(std::to_string(rightPeer.queryPort));
+	args.push_back(leftPeer.uname);
+	args.push_back(leftPeer.IPAddr);
+	args.push_back(std::to_string(leftPeer.leftPort));
+	args.push_back(std::to_string(leftPeer.rightPort));
+	args.push_back(std::to_string(leftPeer.queryPort));
 	
 	UpdateRightSocket(leftPeer);
 	SendMessageNoResponse(rightSocket, args);
 	UpdateRightSocket(rightPeer);
 
 	// Tell right peer to reset left
+	printf("Telling right peer, %s, to reset left to %s\n", rightPeer.uname.c_str(), leftPeer.uname.c_str());
 	args.clear();
 	args.push_back("reset-left");
-	args.push_back(leftPeer.uname);
-	args.push_back(leftPeer.IPAddr);
-	args.push_back(std::to_string(leftPeer.leftPort));
-	args.push_back(std::to_string(leftPeer.rightPort));
-	args.push_back(std::to_string(leftPeer.queryPort));
+	args.push_back(rightPeer.uname);
+	args.push_back(rightPeer.IPAddr);
+	args.push_back(std::to_string(rightPeer.leftPort));
+	args.push_back(std::to_string(rightPeer.rightPort));
+	args.push_back(std::to_string(rightPeer.queryPort));
 
 	SendMessageNoResponse(rightSocket, args);
 
 	// Tell right peer to rebuild dht
+	printf("Telling right peer to Rebuild DHT\n");
+
 	args.clear();
 	args.push_back("rebuild-dht");
 
@@ -1235,6 +1364,8 @@ void Client::FinishLeaveDHT()
 
 void Client::ResetDHTID(std::vector<std::string> args)
 {
+	printf("\nCommand to Reset DHT ID Received\n");
+
 	// Check if self is leaving DHT
 	if (self.dhtID == -1)
 	{
@@ -1262,6 +1393,8 @@ void Client::ResetDHTID(std::vector<std::string> args)
 		return;
 	}
 
+	printf("Resetting my ID to: %d and Ring Size to: %d\n", newID, newRingSize);
+
 	// Set self's new ID and new ring size
 	this->self.dhtID = newID;
 	this->dhtRingSize = newRingSize;
@@ -1275,11 +1408,14 @@ void Client::ResetDHTID(std::vector<std::string> args)
 
 void Client::SetDHTPeerInfo(std::vector<std::string> args)
 {
+	printf("\nCommand to Set ID Received\n");
+
 	int i = 1;
 	// Set self ID/DHT Info
 	self.dhtID = stoi(args[i++]);
 	dhtRingSize = stoi(args[i++]);
 	self.state = InDHT;
+	printf("Setting my ID to: %d and Ring Size to: %d\n", self.dhtID, dhtRingSize);
 
 	// Set Left Neighbour IP Addr/Port
 	leftPeer.uname = args[i++];
@@ -1287,6 +1423,7 @@ void Client::SetDHTPeerInfo(std::vector<std::string> args)
 	leftPeer.leftPort = stoi(args[i++]);
 	leftPeer.rightPort = stoi(args[i++]);
 	leftPeer.queryPort = stoi(args[i++]);
+	printf("Setting my Left Peer to: %s\n", leftPeer.uname.c_str());
 
 	// Set Right Neighbour IP Addr/Port
 	rightPeer.uname = args[i++];
@@ -1294,6 +1431,7 @@ void Client::SetDHTPeerInfo(std::vector<std::string> args)
 	rightPeer.leftPort = stoi(args[i++]);
 	rightPeer.rightPort = stoi(args[i++]);
 	rightPeer.queryPort = stoi(args[i++]);
+	printf("Setting my Right Peer to: %s\n", rightPeer.uname.c_str());
 
 	// Update right socket to new right peer
 	UpdateRightSocket(rightPeer);
@@ -1301,14 +1439,19 @@ void Client::SetDHTPeerInfo(std::vector<std::string> args)
 
 void Client::ResetDHTPeerInfo(std::vector<std::string> args)
 {
+	printf("\nCommand to Reset Peer Info Received\n");
+
+	printf("Reseting my ");
 	Peer* resetPeer;
 	if (args[0] == "reset-left")
 	{
 		resetPeer = &leftPeer;
+		printf("Left");
 	}
 	if (args[0] == "reset-right")
 	{
 		resetPeer = &rightPeer;
+		printf("Right");
 	}
 	int i = 1;
 
@@ -1317,6 +1460,8 @@ void Client::ResetDHTPeerInfo(std::vector<std::string> args)
 	resetPeer->leftPort = stoi(args[i++]);
 	resetPeer->rightPort = stoi(args[i++]);
 	resetPeer->queryPort = stoi(args[i++]);
+
+	printf(" Peer to %s\n", resetPeer->uname.c_str());
 
 	if (resetPeer == &rightPeer)
 	{
