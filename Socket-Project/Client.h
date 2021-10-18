@@ -1,4 +1,12 @@
-﻿#pragma once
+﻿// Client.h provides all includes and the class declaration for
+// Client objects.
+// 
+// Name: Collin Amstutz
+// Student ID: 1208893539
+// Class: CSE 434
+//
+
+#pragma once
 
 #include "socket-helper.h"
 #include "Parser.h"

@@ -1,4 +1,12 @@
-﻿// Socket-Project.cpp : Defines the entry point for the application.
+﻿// Client.cpp contains the main driver and all the methods for the
+// UDP Client. At runtime a user will be required to enter a valid
+// port and IP address for the UDP Server. The client will then
+// take commands entered by the user and send a message to the
+// UDP Server.
+// 
+// Name: Collin Amstutz
+// Student ID: 1208893539
+// Class: CSE 434
 //
 
 #include "Client.h"
@@ -278,6 +286,13 @@ bool Client::RequestRegister(std::vector<std::string> args)
 
 	// Validate Client Ports
 	std::string userInput = "";
+
+	while (!ValidateIPAddress(IPAddress))
+	{
+		std::cout << "Please enter a valid IPV4 address for the Client: ";
+		std::getline(std::cin, IPAddress);
+	}
+
 	while (leftPort < 28500 || leftPort > 28999)
 	{
 		std::cout << "Please enter a valid port number for the left port (28500-28999): ";

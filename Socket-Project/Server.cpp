@@ -1,3 +1,12 @@
+// Server.cpp contains the main driver and all the methods for the
+// UDP Server. At runtime a user will be required to enter a valid
+// port that the server will bind and listen to.
+// 
+// Name: Collin Amstutz
+// Student ID: 1208893539
+// Class: CSE 434
+//
+
 #include "Server.h"
 
 void DieWithError(const char* errorMessage) // External error handling function

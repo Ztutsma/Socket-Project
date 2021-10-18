@@ -1,3 +1,12 @@
+// socket-helper.h provides a number of structs, enums,
+// and includes that will be used by both Client.cpp and
+// Server.cpp
+// 
+// Name: Collin Amstutz
+// Student ID: 1208893539
+// Class: CSE 434
+//
+
 #pragma once
 #include <iostream>
 #include <vector>
