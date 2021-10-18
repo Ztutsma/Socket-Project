@@ -595,9 +595,9 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		// Set all peers to free
 		for (int i = 0; i < peers.size(); i++)
 		{
-			if (peers[peerIndex].state != Free)
+			if (peers[i].state != Free)
 			{
-				peers[peerIndex].state = Free;
+				peers[i].state = Free;
 			}
 		}
 
