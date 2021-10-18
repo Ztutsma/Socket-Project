@@ -572,6 +572,7 @@ std::string Server::UpdateDHTStatus(std::vector <std::string> args)
 		// Mark DHT as running
 		dhtStatus = Running;
 		printf("DHT is now: Running\n");
+		printf("New leader is: %s", this->leader.uname.c_str());
 
 		return "SUCCESS";
 	}

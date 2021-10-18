@@ -641,7 +641,7 @@ bool Client::RequestQueryDHT(std::vector<std::string> args)
 	// Message server
 	args = SendMessageWResponse(serverSocket, args);
 
-	printf("Approval to Teardown DHT recieved\n");
+	printf("Approval to Query DHT recieved\n");
 
 	// Check if successful
 	if (args[0] != "SUCCESS")
@@ -1324,12 +1324,13 @@ void Client::FinishLeaveDHT()
 	// Tell left peer to reset right
 	printf("Telling left peer, %s, to reset right to %s\n", leftPeer.uname.c_str(), rightPeer.uname.c_str());
 
+	args.clear();
 	args.push_back("reset-right");
-	args.push_back(leftPeer.uname);
-	args.push_back(leftPeer.IPAddr);
-	args.push_back(std::to_string(leftPeer.leftPort));
-	args.push_back(std::to_string(leftPeer.rightPort));
-	args.push_back(std::to_string(leftPeer.queryPort));
+	args.push_back(rightPeer.uname);
+	args.push_back(rightPeer.IPAddr);
+	args.push_back(std::to_string(rightPeer.leftPort));
+	args.push_back(std::to_string(rightPeer.rightPort));
+	args.push_back(std::to_string(rightPeer.queryPort));
 	
 	UpdateRightSocket(leftPeer);
 	SendMessageNoResponse(rightSocket, args);
@@ -1339,11 +1340,11 @@ void Client::FinishLeaveDHT()
 	printf("Telling right peer, %s, to reset left to %s\n", rightPeer.uname.c_str(), leftPeer.uname.c_str());
 	args.clear();
 	args.push_back("reset-left");
-	args.push_back(rightPeer.uname);
-	args.push_back(rightPeer.IPAddr);
-	args.push_back(std::to_string(rightPeer.leftPort));
-	args.push_back(std::to_string(rightPeer.rightPort));
-	args.push_back(std::to_string(rightPeer.queryPort));
+	args.push_back(leftPeer.uname);
+	args.push_back(leftPeer.IPAddr);
+	args.push_back(std::to_string(leftPeer.leftPort));
+	args.push_back(std::to_string(leftPeer.rightPort));
+	args.push_back(std::to_string(leftPeer.queryPort));
 
 	SendMessageNoResponse(rightSocket, args);
 
