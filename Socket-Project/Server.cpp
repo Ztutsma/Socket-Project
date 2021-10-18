@@ -232,6 +232,8 @@ std::string Server::DeregisterPeer(std::vector <std::string> args)
 	// Check if peer is registered
 	peerIndex = GetPeerIndex(username);
 
+	printf("\nindex %d\n", peerIndex);
+
 	if (peerIndex == -1)
 	{
 		return "FAILURE";
@@ -239,6 +241,7 @@ std::string Server::DeregisterPeer(std::vector <std::string> args)
 
 	peer = peers[peerIndex];
 
+	printf("\state %d\n", peer.state);
 	// Check if peer is in DHT
 	if (peer.state != Free)
 	{
@@ -491,6 +494,7 @@ std::string Server::DelDHTPeer(std::vector <std::string> args)
 	// Save leaving peer info
 	cachedPeer = peer;
 	cachedPeer.dhtID = -2;
+	printf("\state %d\n", peer.state);
 
 	// Set DHT status as being rebuilt
 	dhtStatus = Rebuilding;
